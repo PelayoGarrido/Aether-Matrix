@@ -19,6 +19,14 @@ This is an engineering preview. Record exact builds, host versions and results b
 - [ ] Instruments / ThreadSanitizer checks for races, locks, malloc and CPU/energy behavior.
 - [ ] Release source matches binary build commit; installer checksums published.
 
-The Actions release workflow produces draft prereleases only after both native builds pass. A manual run without a tag produces artifacts without inventing a release tag. The Pages workflow publishes only after the same commit's native and source jobs pass, and includes that build's macOS installer. Enable GitHub Pages with **GitHub Actions** as its source.
+The Actions release workflow produces draft prereleases only after both native builds pass. A manual run without a tag produces artifacts without inventing a release tag. The Pages workflow publishes only after the same commit's native and source jobs pass, and includes both installers from that build. Enable GitHub Pages with **GitHub Actions** as its source.
 
 Unsigned package approval, ad-hoc integrity signatures and a clean build are separate from Developer ID signing, notarization, Windows Authenticode reputation and real host acceptance. None of those external checks is implied by the code or CI files.
+
+## Local evidence — 2026-10-16
+
+The universal macOS Release build completed with Xcode 26.3 / AppleClang 17. Processor tests passed natively on arm64 and under Rosetta on x86_64. The native tests also executed the bundled reference ONNX model; Rosetta exercised the hybrid fallback. No C++ compiler warnings remained. GNU Make emitted an upstream JUCE VST3 manifest-helper jobserver warning; it did not prevent manifest generation.
+
+AU, VST3 and Standalone signatures, universal slices, model/runtime resources and development-path checks passed. The unsigned macOS installer was generated and expanded without installing: the two plugin signatures, three model copies and exact postinstall script were verified. The Standalone UI opened and generated both draggable file pills. Installation into system plugin folders and real DAW validation remain pending.
+
+The website was checked at 375, 768 and 1280 pixels without horizontal overflow. Matrix buttons, keyboard sliders, audio start/stop and installation details were exercised; no browser console warnings/errors were observed. Reduced-motion and visibility handling are implemented; OS-level reduced-motion emulation was not exercised in this browser session.

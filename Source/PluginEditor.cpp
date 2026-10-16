@@ -216,7 +216,7 @@ void AetherMatrixEditor::paint(juce::Graphics& g)
 
         g.setColour(juce::Colours::white.withAlpha(0.6f + w * 0.4f));
         g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
-        juce::String label = juce::String(nodes[i].name) + " (" + juce::String(w * 100.0f, 0) + "%)";
+        juce::String label = juce::String(nodes[i].name) + " (" + juce::String(juce::roundToInt(w * 100.0f)) + "%)";
         g.drawText(label, static_cast<int>(nx - 60.0f), static_cast<int>(ny - r - 20.0f),
                    120, 18, juce::Justification::centred, false);
     }
@@ -260,7 +260,7 @@ void AetherMatrixEditor::paint(juce::Graphics& g)
         g.fillRoundedRectangle(track.withWidth(track.getWidth() * progress), 2.5f);
         g.setColour(juce::Colours::white);
         g.setFont(juce::FontOptions(12.0f));
-        g.drawText("Rendering WAV + MIDI  " + juce::String(progress * 100.0f, 0) + "%",
+        g.drawText("Rendering WAV + MIDI  " + juce::String(juce::roundToInt(progress * 100.0f)) + "%",
                    overlay.withTrimmedBottom(10.0f), juce::Justification::centred, false);
     }
     if (engineProcessor.hasGeneratedFiles())

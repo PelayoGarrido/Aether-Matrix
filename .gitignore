@@ -19,3 +19,5 @@ web/.vercel/
 web/test-results/
 __pycache__/
 *.pyc
+*.pkg.sha256
+*.exe.sha256

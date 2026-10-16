@@ -1,69 +1,67 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0c12">
-  <meta name="description" content="Aether Matrix is an open-source AU and VST3 instrument. Explore five styles on an XY pad, then export a four-bar stereo WAV and multitrack MIDI phrase.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Aether Matrix — A space between styles</title>
-  <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css"><script src="./app.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080a0e">
+  <meta name="description" content="Aether Matrix. Five musical styles, one expressive instrument. Open-source AU, VST3 and standalone for macOS and Windows VST3.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Aether Matrix — Five styles. Your sound.</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="data:,">
+  <script src="./app.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
-<header class="site-header wrap">
-  <a class="brand" href="#" aria-label="Aether Matrix home"><img src="./icon.svg" alt="" width="30" height="30"><span>AETHER<span class="brand-light"> / MATRIX</span></span></a>
-  <nav aria-label="Main navigation"><a href="#instrument">Instrument</a><a href="#workflow">Workflow</a><a href="#download">Download</a></nav>
-  <a class="nav-github" href="https://github.com/PelayoGarrido/Aether-Matrix">GitHub <span aria-hidden="true">↗</span></a>
+<header class="header shell">
+  <a class="wordmark" href="#main">Aether Matrix</a>
+  <nav aria-label="Main navigation"><a href="#instrument">Instrument</a><a href="#listen">Listen</a><a href="#download">Download</a></nav>
+  <a class="github-link" href="https://github.com/PelayoGarrido/Aether-Matrix">GitHub ↗</a>
 </header>
 <main id="main">
-<section class="hero wrap" aria-labelledby="hero-title">
-  <div class="hero-copy">
-    <div class="eyebrow"><span class="status-dot"></span> INSTRUMENT / OPEN SOURCE / v0.1</div>
-    <h1 id="hero-title">Find the space<br>between <em>styles.</em></h1>
-    <p class="hero-description">A little hip-hop. A touch of classical.<br>Move through five musical worlds.<br>Make the in-between your own.</p>
-    <div class="hero-actions"><a class="button primary" href="#instrument">Explore the matrix <span aria-hidden="true">↗</span></a><a class="text-link" href="#download">Get the plugin <span aria-hidden="true">↓</span></a></div>
-    <div class="format-strip"><span>AU</span><span>VST3</span><i></i><span>macOS + Windows</span></div>
-  </div>
-  <div class="instrument-scene" id="instrument">
-    <div class="orbit-ring" aria-hidden="true"></div>
-    <div class="instrument glass">
-      <div class="instrument-top"><span class="instrument-logo">æ <b>MATRIX</b></span><span class="instrument-mode"><span class="status-dot"></span> HYBRID ENGINE</span><span class="dots" aria-hidden="true">•••</span></div>
-      <div class="instrument-sub"><span>STYLE INTERPOLATION</span><span>A MINOR <span aria-hidden="true">⌄</span> <i>120 BPM</i></span></div>
-      <div class="xy-pad" id="xy-pad" role="group" aria-label="Interactive musical style matrix. Use the X and Y sliders below or drag the pad.">
-        <svg class="matrix-art" viewBox="0 0 500 330" preserveAspectRatio="none" aria-hidden="true">
-          <defs><linearGradient id="wave-gradient"><stop stop-color="#91d6cb" stop-opacity="0"/><stop offset=".4" stop-color="#91d6cb"/><stop offset=".7" stop-color="#c3b1fa"/><stop offset="1" stop-color="#c3b1fa" stop-opacity="0"/></linearGradient></defs>
-          <g class="connections"><path id="connections" d="M75 55L250 165L425 55M75 275L250 165L425 275"/></g>
-          <path class="wave" id="wave" d="M0 165H500"/>
-        </svg>
-        <button class="style-node hiphop" data-x=".15" data-y=".85"><span></span>HIP-HOP <small id="weight-0">2%</small></button>
-        <button class="style-node classical" data-x=".85" data-y=".85"><span></span>CLASSICAL <small id="weight-1">2%</small></button>
-        <button class="style-node pop" data-x=".50" data-y=".50"><span></span>POP <small id="weight-2">92%</small></button>
-        <button class="style-node electronic" data-x=".15" data-y=".15"><span></span>ELECTRONIC <small id="weight-3">2%</small></button>
-        <button class="style-node cinematic" data-x=".85" data-y=".15"><span></span>CINEMATIC <small id="weight-4">2%</small></button>
-        <div class="matrix-cursor" id="matrix-cursor" aria-hidden="true"><span></span></div>
-        <span class="pad-caption">DRAG TO EXPLORE</span>
-      </div>
-      <div class="matrix-access"><label>X <input id="matrix-x" type="range" min="0" max="100" value="50" aria-label="Matrix X"></label><label>Y <input id="matrix-y" type="range" min="0" max="100" value="50" aria-label="Matrix Y"></label></div>
-      <div class="instrument-controls"><label><span>RHYTHM DENSITY <output id="density-value">55%</output></span><input id="density" type="range" min="0" max="100" value="55"></label><label><span>HARMONIC TENSION <output id="tension-value">30%</output></span><input id="tension" type="range" min="0" max="100" value="30"></label></div>
-      <div class="instrument-bottom"><button id="play-demo" class="play-button" aria-pressed="false"><span id="play-icon" aria-hidden="true">▶</span> <span id="play-label">Play web sketch</span></button><span id="demo-status" role="status">CLICK TO LISTEN</span><span class="level-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-backdrop" aria-hidden="true"></div>
+    <div class="hero-copy shell">
+      <h1 id="hero-title"><span>Five styles.</span><span>Your sound.</span></h1>
+      <p>Blend musical worlds. Shape a phrase.<br>Bring it into your DAW.</p>
+      <div class="actions"><a class="button accent" href="#download">Get Aether Matrix ↓</a><a class="button quiet" href="#listen">Hear the instrument ↗</a></div>
     </div>
-    <div class="export-float glass"><span class="file-icon" aria-hidden="true">↗</span><div><strong>From an idea to your DAW.</strong><span>4-bar stereo WAV + multitrack MIDI</span></div><span class="export-badge">24 BIT</span></div>
-    <p class="demo-note">Interactive web sketch. A sound study, not the native plugin.</p>
-  </div>
-</section>
-<div class="rule wrap"><span>YOUR SESSION. YOUR MACHINE. YOUR SOUND.</span><span>NO ACCOUNT · NO CLOUD INFERENCE</span></div>
-<section class="workflow wrap" id="workflow" aria-labelledby="workflow-title">
-  <div class="section-heading"><div><div class="eyebrow">01 / THE WORKFLOW</div><h2 id="workflow-title">Less menu diving.<br>More music making.</h2></div><p>Find a texture, shape the phrase,<br>bring it into your session.</p></div>
-  <div class="feature-grid">
-    <article class="feature glass"><div class="feature-art mini-matrix" aria-hidden="true"><span></span><i></i><b></b></div><div class="feature-number">01 — EXPLORE</div><h3>A place between genres.</h3><p>Blend five synthesis styles on one XY pad. No preset list between you and the next idea.</p></article>
-    <article class="feature glass"><div class="feature-art faders" aria-hidden="true"><i><b></b></i><i><b></b></i><i><b></b></i><i><b></b></i></div><div class="feature-number">02 — SHAPE</div><h3>Give the phrase a direction.</h3><p>Set the key and scale. Adjust rhythm, tension, articulation and space. Play notes or use the host transport.</p></article>
-    <article class="feature glass"><div class="feature-art file-art" aria-hidden="true"><span>WAV<small>STEREO / 24 BIT</small></span><span>MIDI<small>CHORDS / BASS / LEAD</small></span></div><div class="feature-number">03 — MAKE IT YOURS</div><h3>Leave with something editable.</h3><p>Render a four-bar master and separate MIDI parts. Drag the finished files into your DAW and keep building.</p></article>
-  </div>
-</section>
-<section class="local-section wrap" aria-labelledby="local-title"><div class="local-visual glass" aria-hidden="true"><div class="chip"><span>æ</span><small>LOCAL ENGINE</small></div><div class="chip-orbit"></div><span class="local-caption">SYNTHESIS + OPTIONAL ONNX</span></div><div class="local-copy"><div class="eyebrow">02 / UNDER THE HOOD</div><h2 id="local-title">The studio stays<br>on your machine.</h2><p>The hybrid synth works on its own. An optional ONNX decoder adds another layer, running locally on a background thread.</p><p class="subtle">The included decoder is a reproducible sine-basis reference, not a trained RAVE model. Compatible, trusted models can be loaded separately. ONNX runs at 48 kHz on Apple Silicon and Windows x64; Intel uses the hybrid synth.</p><a class="text-link" href="https://github.com/PelayoGarrido/Aether-Matrix/blob/main/docs/MODELS.md">Read the model contract <span aria-hidden="true">↗</span></a></div></section>
-<section class="download-section wrap" id="download" aria-labelledby="download-title"><div class="download-panel glass"><div class="eyebrow">03 / START A SESSION</div><h2 id="download-title">A new corner of<br>your sound.</h2><p>Free to use. Open to change. Built for your DAW.</p><div class="download-options"><a class="button primary" href="./downloads/Aether_Matrix_macOS.pkg" download>Download for macOS <span aria-hidden="true">↓</span></a><a class="button secondary" href="./downloads/Aether_Matrix_Windows_Setup.exe" download>Download for Windows <span aria-hidden="true">↓</span></a></div><p class="download-fine">v0.1 preview · macOS 14+ · AU & VST3 · Apple Silicon + Intel<br>Unsigned installer. See the installation notes below.</p><div class="download-bottom"><span>AGPL-3.0-OR-LATER</span><a href="https://github.com/PelayoGarrido/Aether-Matrix">Build from source <span aria-hidden="true">↗</span></a></div></div></section>
-<section class="faq wrap" aria-labelledby="faq-title"><div><div class="eyebrow">A FEW PRACTICAL NOTES</div><h2 id="faq-title">Before you press play.</h2></div><div class="faq-list"><details><summary>How do I install it on macOS?<span aria-hidden="true">+</span></summary><p>Open the downloaded .pkg and follow the installer. If macOS blocks it, go to System Settings → Privacy & Security → Open Anyway, then reopen the installer. Close your DAW before installing and rescan plugins afterward. Administrator permission is required.</p><p>This preview is ad-hoc signed, not notarized. Host validation is still in progress; approval of the installer alone does not guarantee every DAW will accept the plugin.</p></details><details><summary>What about Windows?<span aria-hidden="true">+</span></summary><p>Download the Windows installer above and run it to install the x64 VST3 plugin. If SmartScreen offers an override for a build you trust, use More info → Run anyway. This is a preview build; real DAW validation remains in progress.</p></details><details><summary>Which DAWs does it work with?<span aria-hidden="true">+</span></summary><p>AU is intended for Logic Pro on macOS. VST3 is intended for FL Studio, Ableton Live and REAPER. These are target hosts. Installation, scanning, automation and drag-and-drop still require real host testing on each platform.</p></details><details><summary>Does it export audio stems?<span aria-hidden="true">+</span></summary><p>It exports a stereo audio master and a Type-1 MIDI file with tempo, chords, bass and lead tracks. It does not export separate audio stems. Offline renders use the hybrid synth; the ONNX layer is for live playback.</p></details><details><summary>Can I use it or contribute?<span aria-hidden="true">+</span></summary><p>Yes. The source is available under AGPL-3.0-or-later. The license covers the software; your own musical output remains yours. Bug reports, code and host test results are welcome on GitHub. See the repository for the full license and contribution guide.</p></details></div></section>
+    <figure class="hero-product shell" id="instrument">
+      <div class="product-crop"><img src="./assets/instrument.png?v=preview2" alt="Actual Aether Matrix interface: metallic housing, five-style blend display, Density and Tension knobs, Contour and Space controls, WAV and MIDI export." width="2324" height="1456" fetchpriority="high"></div>
+      <figcaption>One instrument. AU, VST3 &amp; standalone.</figcaption>
+    </figure>
+  </section>
+  <section class="features" aria-labelledby="features-title">
+    <div class="shell">
+      <div class="section-intro"><h2 id="features-title">From a spark.<br>To your session.</h2><p>Explore with your ears.<br>Keep your hands on the sound.</p></div>
+      <div class="feature-layout">
+        <div class="detail-view" data-view="blend"><img src="./assets/instrument.png?v=preview2" alt="Close view of the real style blend display" width="2324" height="1456" loading="lazy" id="detail-image"></div>
+        <div class="feature-copy">
+          <div class="feature-tabs" role="tablist" aria-label="Explore the instrument"><button id="tab-blend" role="tab" aria-selected="true" aria-controls="feature-panel" data-view="blend">Blend</button><button id="tab-shape" role="tab" aria-selected="false" aria-controls="feature-panel" tabindex="-1" data-view="shape">Shape</button><button id="tab-export" role="tab" aria-selected="false" aria-controls="feature-panel" tabindex="-1" data-view="export">Export</button></div>
+          <div id="feature-panel" role="tabpanel" aria-labelledby="tab-blend" tabindex="0"><h3 id="feature-title">Find the space<br>between styles.</h3><p id="feature-description">Hip-hop, classical, pop, electronic and cinematic. Move across the display to blend their synthesis voices, or use the two side faders.</p></div>
+          <a class="inline-link" href="https://github.com/PelayoGarrido/Aether-Matrix#readme">Explore the documentation ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="listen shell" id="listen" aria-labelledby="listen-title">
+    <div class="listen-copy"><h2 id="listen-title">Press play.<br>Meet the engine.</h2><p>A four-bar phrase rendered by Aether Matrix. The very same WAV + MIDI workflow you get in the plugin.</p><p class="sample-description">A minor · 120 BPM · Hybrid synthesis<br>Hip-hop / pop blend</p></div>
+    <div class="listening-room">
+      <img src="./assets/studio.jpg" alt="Studio headphones resting on a synthesizer keyboard, photographed by Viktor Forgacs" width="1920" height="1280" loading="lazy">
+      <div class="audio-panel"><button class="audio-button" id="sample-button" aria-pressed="false" disabled>Play four-bar phrase</button><audio id="sample" preload="none" controls src="./assets/four-bars.mp3" aria-label="Aether Matrix four-bar audio sample"></audio><div class="audio-track" aria-hidden="true"><span id="audio-progress"></span></div><p id="audio-status" role="status">Rendered in Aether Matrix.</p></div>
+    </div>
+  </section>
+  <section class="studio-film" aria-labelledby="studio-title">
+    <video id="studio-video" muted loop playsinline preload="none" poster="./assets/studio.jpg" aria-hidden="true" tabindex="-1" data-src="./assets/studio-session.mp4"></video>
+    <div class="film-wash" aria-hidden="true"></div>
+    <div class="film-copy shell"><h2 id="studio-title">Stay in<br>the session.</h2><p>Your instrument runs locally.<br>No account. No cloud inference.<br>Just you, your machine and your music.</p><button class="film-button" id="film-button" aria-pressed="false">Play background film</button></div>
+  </section>
+  <section class="download shell" id="download" aria-labelledby="download-title">
+    <div><h2 id="download-title">Make room<br>for a new sound.</h2><p>Open source. Free to explore.<br>Built for the way you make music.</p></div>
+    <div class="download-card"><h3>Get the preview.</h3><div class="download-options"><a class="button accent" href="./downloads/Aether_Matrix_macOS.pkg" download>Download for macOS ↓</a><a class="button silver" href="./downloads/Aether_Matrix_Windows_Setup.exe" download>Download for Windows ↓</a></div><p>macOS 14+ · Apple Silicon &amp; Intel<br>Windows x64 · VST3</p><p>v0.1 preview. The installers are unsigned; real DAW validation is in progress.</p><a class="inline-link" href="https://github.com/PelayoGarrido/Aether-Matrix/releases">Release notes &amp; checksums ↗</a></div>
+  </section>
+<section class="faq shell" aria-labelledby="faq-title"><div><h2 id="faq-title">Before you press play.</h2></div><div class="faq-list"><details><summary>How do I install it on macOS?<span aria-hidden="true">+</span></summary><p>Open the downloaded .pkg and follow the installer. If macOS blocks it, go to System Settings → Privacy & Security → Open Anyway, then reopen the installer. Close your DAW before installing and rescan plugins afterward. Administrator permission is required.</p><p>This preview is ad-hoc signed, not notarized. Host validation is still in progress; approval of the installer alone does not guarantee every DAW will accept the plugin.</p></details><details><summary>What about Windows?<span aria-hidden="true">+</span></summary><p>Download the Windows installer above and run it to install the x64 VST3 plugin. If SmartScreen offers an override for a build you trust, use More info → Run anyway. This is a preview build; real DAW validation remains in progress.</p></details><details><summary>Which DAWs does it work with?<span aria-hidden="true">+</span></summary><p>AU is intended for Logic Pro on macOS. VST3 is intended for FL Studio, Ableton Live and REAPER. These are target hosts. Installation, scanning, automation and drag-and-drop still require real host testing on each platform.</p></details><details><summary>Does it export audio stems?<span aria-hidden="true">+</span></summary><p>It exports a stereo audio master and a Type-1 MIDI file with tempo, chords, bass and lead tracks. It does not export separate audio stems. Offline renders use the hybrid synth; the ONNX layer is for live playback.</p></details><details><summary>Can I use it or contribute?<span aria-hidden="true">+</span></summary><p>Yes. The source is available under AGPL-3.0-or-later. The license covers the software; your own musical output remains yours. Bug reports, code and host test results are welcome on GitHub. See the repository for the full license and contribution guide.</p></details></div></section>
 </main>
-<footer class="wrap"><a class="brand" href="#"><img src="./icon.svg" alt="" width="26" height="26"><span>AETHER<span class="brand-light"> / MATRIX</span></span></a><span>A small instrument. An open project.</span><a href="https://github.com/PelayoGarrido/Aether-Matrix">Source on GitHub ↗</a></footer>
-</body></html>
+<footer class="shell"><div class="footer-main"><a class="wordmark" href="#main">Aether Matrix</a><a href="https://github.com/PelayoGarrido/Aether-Matrix">Source on GitHub ↗</a></div><div class="credits"><span>Software: AGPL-3.0-or-later.</span><span>Film by <a href="https://www.pexels.com/video/a-musician-using-a-synthesizer-7098116/">cottonbro studio / Pexels</a>. Photo by <a href="https://unsplash.com/photos/headphones-on-piano-keyboard-in-studio-H6YkQEnD5Gk">Viktor Forgacs / Unsplash</a>.</span><a href="./media-credits.html">Media licences &amp; model notes ↗</a></div></footer>
+</body>
+</html>

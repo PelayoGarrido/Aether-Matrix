@@ -6,6 +6,10 @@ An open-source AU / VST3 instrument with a 2D style matrix, local synthesis and 
 
 **v0.1 is a preview.** AU targets Logic Pro; VST3 targets FL Studio, Ableton Live and REAPER. Real host validation is tracked in [release review](docs/RELEASE_REVIEW.md). Do not treat successful compilation as DAW compatibility certification.
 
+![Actual Aether Matrix interface](web/public/assets/instrument.png)
+
+The metallic editor is shared by the AU, VST3 and standalone builds. Its display plots actual style weights; it is not an equalizer.
+
 ## What it does
 
 - XY interpolation between five synthesis styles; MIDI input and host-tempo sequencing.
@@ -74,3 +78,5 @@ pnpm check
 ## License
 
 [AGPL-3.0-or-later](LICENSE), matching JUCE 8's open-source licensing route. See [third-party notices](THIRD_PARTY_NOTICES.md). A commercial, closed-source derivative requires a separate review of JUCE and other licensing terms; this repository does not grant a commercial JUCE licence.
+
+Website photography and video retain their respective third-party media licences; see [media credits](web/ASSETS.md).

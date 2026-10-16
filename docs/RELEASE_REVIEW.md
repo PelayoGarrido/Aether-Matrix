@@ -30,3 +30,11 @@ The universal macOS Release build completed with Xcode 26.3 / AppleClang 17. Pro
 AU, VST3 and Standalone signatures, universal slices, model/runtime resources and development-path checks passed. The unsigned macOS installer was generated and expanded without installing: the two plugin signatures, three model copies and exact postinstall script were verified. The Standalone UI opened and generated both draggable file pills. Installation into system plugin folders and real DAW validation remain pending.
 
 The website was checked at 375, 768 and 1280 pixels without horizontal overflow. Matrix buttons, keyboard sliders, audio start/stop and installation details were exercised; no browser console warnings/errors were observed. Reduced-motion and visibility handling are implemented; OS-level reduced-motion emulation was not exercised in this browser session.
+
+## Interface update — 2026-10-16
+
+The editor now uses a wide metallic enclosure, a recessed style-weight display, two large modules, two compact modules, illuminated percentage readouts and accessible X/Y sliders. AU, VST3 and Standalone share this editor. The plotted lobes represent synthesis style weights, not a frequency equalizer. The overlaid waveform comes from the actual audio scope.
+
+The website uses an actual native capture, licensed photo/video, and a recorded native four-bar hybrid export. Its former Web Audio approximation and generated SVG decorations have been removed. Native browser animations require no added JavaScript dependencies.
+
+Keep this build a **pre-release**. Automated builds and unit checks establish engineering evidence, but clean-machine installation, real AU/VST3 host validation, stress testing and a complete Windows user-path check remain required before stable promotion. Signing/notarization improve distribution and must be reported separately; open-source status does not require a stable release label or a trained RAVE model.

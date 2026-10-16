@@ -31,6 +31,8 @@ jobs:
         run: |
           cat > notes.md <<'EOF'
           Preview build of Aether Matrix. AU and VST3 on macOS; VST3 on Windows x64.
+          Updated metallic editor shared with Standalone: recessed style display, physical knobs, illuminated readouts and XY faders.
+          Product website uses actual native captures, licensed studio footage and a real hybrid-engine audio example.
           The macOS plugin is universal. Local ONNX decoding is available on Apple Silicon and Windows x64 at 48 kHz; Intel uses hybrid synthesis.
           Includes a deterministic reference decoder, not a trained RAVE model.
           Unsigned installers. Real DAW validation is tracked in docs/RELEASE_REVIEW.md.

@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+# Only these two installed bundles are changed; no system-wide Gatekeeper setting is altered.
+for bundle in '/Library/Audio/Plug-Ins/Components/Aether Matrix.component' \
+              '/Library/Audio/Plug-Ins/VST3/Aether Matrix.vst3'; do
+    test -d "$bundle" && test ! -L "$bundle" || exit 1
+    /usr/bin/xattr -dr com.apple.quarantine "$bundle" 2>/dev/null || true
+    /usr/bin/codesign --force --deep --sign - "$bundle"
+    /usr/bin/codesign --verify --deep --strict "$bundle"
+done
+/usr/bin/killall -TERM AudioComponentRegistrar 2>/dev/null || true
+exit 0

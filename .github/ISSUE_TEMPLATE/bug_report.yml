@@ -1,0 +1,23 @@
+name: Bug report
+description: Report an audio, export, installation or host problem
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, CPU, DAW version, AU/VST3, sample rate, buffer size, plugin version.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Actual result
+      description: Remove personal paths and private project information from logs.
+    validations:
+      required: true

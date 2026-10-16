@@ -1,0 +1,56 @@
+name: Native builds
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure macOS universal
+        if: runner.os == 'macOS'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64'
+      - name: Configure Windows x64
+        if: runner.os == 'Windows'
+        run: cmake -S . -B build -A x64
+      - name: Build
+        run: cmake --build build --config Release --parallel 2
+      - name: Processor, model and export tests
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Verify macOS bundles
+        if: runner.os == 'macOS'
+        run: python3 scripts/verify_bundles.py build/Aether_Matrix_artefacts/Release
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        run: ./installers/macos/build_pkg.sh build 0.1.0
+      - name: Bundle Windows CRT
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -Directory | Sort-Object FullName | Select-Object -Last 1
+          if (!$crt) { throw 'MSVC runtime redistribution directory is missing' }
+          Copy-Item "$($crt.FullName)\*.dll" 'build\Aether_Matrix_artefacts\Release\VST3\Aether Matrix.vst3\Contents\x86_64-win\'
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DAppVersion=0.1.0 "/DBuildDir=$pwd\build" installers/windows/installer.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+      - name: Checksums
+        run: python3 scripts/checksums.py build/installers
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Aether-Matrix-${{ runner.os }}
+          path: build/installers/*
+          if-no-files-found: error
+          retention-days: 14

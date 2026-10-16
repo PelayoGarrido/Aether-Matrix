@@ -679,6 +679,9 @@ footer {
     width:100%;
     aspect-ratio:1.22
   }
+  .detail-view[data-view="export"] img {
+    top:-68%
+  }
   .feature-copy {
     width:100%
   }

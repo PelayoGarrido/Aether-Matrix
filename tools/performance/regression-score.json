@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "bpm": 100,
+  "bars": 4,
+  "ticks_per_beat": 480,
+  "gm_program": 0,
+  "sharps": 0,
+  "minor": 0,
+  "candidate": "aether-authored-regression-score",
+  "notes": [
+    {
+      "pitch": 36,
+      "velocity": 80,
+      "tick": 0,
+      "duration": 1800
+    },
+    {
+      "pitch": 48,
+      "velocity": 80,
+      "tick": 0,
+      "duration": 1800
+    },
+    {
+      "pitch": 52,
+      "velocity": 80,
+      "tick": 0,
+      "duration": 1800
+    },
+    {
+      "pitch": 55,
+      "velocity": 80,
+      "tick": 0,
+      "duration": 1800
+    },
+    {
+      "pitch": 72,
+      "velocity": 80,
+      "tick": 0,
+      "duration": 420
+    },
+    {
+      "pitch": 76,
+      "velocity": 80,
+      "tick": 480,
+      "duration": 420
+    },
+    {
+      "pitch": 79,
+      "velocity": 80,
+      "tick": 960,
+      "duration": 420
+    },
+    {
+      "pitch": 76,
+      "velocity": 80,
+      "tick": 1440,
+      "duration": 420
+    },
+    {
+      "pitch": 33,
+      "velocity": 80,
+      "tick": 1920,
+      "duration": 1800
+    },
+    {
+      "pitch": 45,
+      "velocity": 80,
+      "tick": 1920,
+      "duration": 1800
+    },
+    {
+      "pitch": 48,
+      "velocity": 80,
+      "tick": 1920,
+      "duration": 1800
+    },
+    {
+      "pitch": 52,
+      "velocity": 80,
+      "tick": 1920,
+      "duration": 1800
+    },
+    {
+      "pitch": 69,
+      "velocity": 80,
+      "tick": 1920,
+      "duration": 420
+    },
+    {
+      "pitch": 72,
+      "velocity": 80,
+      "tick": 2400,
+      "duration": 420
+    },
+    {
+      "pitch": 76,
+      "velocity": 80,
+      "tick": 2880,
+      "duration": 420
+    },
+    {
+      "pitch": 72,
+      "velocity": 80,
+      "tick": 3360,
+      "duration": 420
+    },
+    {
+      "pitch": 29,
+      "velocity": 80,
+      "tick": 3840,
+      "duration": 1800
+    },
+    {
+      "pitch": 41,
+      "velocity": 80,
+      "tick": 3840,
+      "duration": 1800
+    },
+    {
+      "pitch": 45,
+      "velocity": 80,
+      "tick": 3840,
+      "duration": 1800
+    },
+    {
+      "pitch": 48,
+      "velocity": 80,
+      "tick": 3840,
+      "duration": 1800
+    },
+    {
+      "pitch": 65,
+      "velocity": 80,
+      "tick": 3840,
+      "duration": 420
+    },
+    {
+      "pitch": 69,
+      "velocity": 80,
+      "tick": 4320,
+      "duration": 420
+    },
+    {
+      "pitch": 72,
+      "velocity": 80,
+      "tick": 4800,
+      "duration": 420
+    },
+    {
+      "pitch": 69,
+      "velocity": 80,
+      "tick": 5280,
+      "duration": 420
+    },
+    {
+      "pitch": 31,
+      "velocity": 80,
+      "tick": 5760,
+      "duration": 1800
+    },
+    {
+      "pitch": 43,
+      "velocity": 80,
+      "tick": 5760,
+      "duration": 1800
+    },
+    {
+      "pitch": 47,
+      "velocity": 80,
+      "tick": 5760,
+      "duration": 1800
+    },
+    {
+      "pitch": 50,
+      "velocity": 80,
+      "tick": 5760,
+      "duration": 1800
+    },
+    {
+      "pitch": 67,
+      "velocity": 80,
+      "tick": 5760,
+      "duration": 420
+    },
+    {
+      "pitch": 71,
+      "velocity": 80,
+      "tick": 6240,
+      "duration": 420
+    },
+    {
+      "pitch": 74,
+      "velocity": 80,
+      "tick": 6720,
+      "duration": 420
+    },
+    {
+      "pitch": 71,
+      "velocity": 80,
+      "tick": 7200,
+      "duration": 420
+    }
+  ]
+}

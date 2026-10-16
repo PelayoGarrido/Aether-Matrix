@@ -80,6 +80,7 @@ juce_add_binary_data(AetherModel HEADER_NAME DefaultModel.h NAMESPACE AetherMode
 target_sources(Aether_Matrix PRIVATE
     Source/PluginProcessor.cpp Source/PluginProcessor.h
     Source/PluginEditor.cpp Source/PluginEditor.h Source/AudioQuality.h
+    Source/Performance.cpp Source/Performance.h Source/PianoSampler.cpp Source/PianoSampler.h
     Source/OnnxEngine.cpp Source/OnnxEngine.h)
 target_compile_definitions(Aether_Matrix PUBLIC
     AETHER_ENABLE_ONNX=$<BOOL:${AETHER_ENABLE_ONNX}>
@@ -88,8 +89,15 @@ if(AETHER_ENABLE_ONNX)
     target_include_directories(Aether_Matrix SYSTEM PRIVATE "${AETHER_ORT_ROOT}/include")
 endif()
 target_link_libraries(Aether_Matrix PRIVATE
-    AetherModel juce::juce_audio_utils juce::juce_dsp
+    AetherModel juce::juce_audio_utils juce::juce_dsp juce::juce_cryptography
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+
+if(AETHER_BUILD_GENERATION_TOOLS)
+    add_executable(AetherPianoRender tools/piano/render.cpp)
+    target_include_directories(AetherPianoRender PRIVATE "$<TARGET_PROPERTY:Aether_Matrix,INCLUDE_DIRECTORIES>" Source)
+    target_compile_definitions(AetherPianoRender PRIVATE JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1)
+    target_link_libraries(AetherPianoRender PRIVATE Aether_Matrix)
+endif()
 
 foreach(format IN LISTS plugin_formats)
     set(plugin_target Aether_Matrix_${format})
@@ -139,6 +147,13 @@ if(AETHER_BUILD_TESTS)
     target_compile_definitions(AetherAudioQualityTests PRIVATE JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1)
     target_link_libraries(AetherAudioQualityTests PRIVATE Aether_Matrix)
     add_test(NAME audio_quality COMMAND AetherAudioQualityTests)
+    add_executable(AetherPianoTests tests/PianoTests.cpp)
+    target_include_directories(AetherPianoTests PRIVATE "$<TARGET_PROPERTY:Aether_Matrix,INCLUDE_DIRECTORIES>" Source)
+    target_compile_definitions(AetherPianoTests PRIVATE JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
+        AETHER_PIANO_LAYOUT="${CMAKE_CURRENT_SOURCE_DIR}/tools/piano/salamander-layout.json")
+    target_link_libraries(AetherPianoTests PRIVATE Aether_Matrix)
+    add_test(NAME piano COMMAND AetherPianoTests)
+    set_tests_properties(piano PROPERTIES TIMEOUT 30)
     set_tests_properties(audio_quality PROPERTIES TIMEOUT 30)
     add_test(NAME processor COMMAND AetherMatrixTests)
     set_tests_properties(processor PROPERTIES TIMEOUT 90)

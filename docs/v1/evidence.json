@@ -1,0 +1,239 @@
+{
+  "date": "2026-10-16",
+  "status": "not_v1_ready",
+  "hardware": {
+    "cpu": "Apple M1",
+    "ram_bytes": 17179869184,
+    "architecture": "arm64",
+    "macos": "15.7.3"
+  },
+  "runtime": "ONNX Runtime 1.31.0 CPU, two intra-op threads",
+  "candidate_revision": "0f8f265d4330f4e46527ac2313200254c5757f5f",
+  "candidate_runs": [
+    {
+      "schema": 1,
+      "midi_matches_performance": true,
+      "notes": 130,
+      "first_note_tick": 0,
+      "last_note_end_tick": 15360,
+      "requested_end_tick": 15360,
+      "duration_weighted_diatonic_fraction": 1.0,
+      "peak_polyphony": 5,
+      "velocity_values": [
+        62,
+        63,
+        64,
+        65,
+        66,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        89,
+        91,
+        96
+      ],
+      "pitch_class_note_counts": {
+        "0": 34,
+        "4": 32,
+        "7": 64
+      },
+      "load_seconds": 1.58415,
+      "generation_seconds": 12.6913,
+      "sampled_peak_footprint_bytes": 301354240,
+      "stop_reason": "timeline_limit",
+      "quality_approved": false,
+      "name": "piano-c-major-42-final",
+      "seed": 42,
+      "bpm": 120,
+      "bars": 8,
+      "sharps": 0,
+      "minor": 0,
+      "midi_sha256": "c9de11b6f794f80c0b9bc7cb86e726475a9c12b742bf0055e65ab6070c477ffa",
+      "audition": {
+        "renderer": "Apple system DLS, listening reference only",
+        "sample_rate": 44100,
+        "frames": 793800,
+        "sample_peak": 0.180114,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "schema": 1,
+      "midi_matches_performance": true,
+      "notes": 115,
+      "first_note_tick": 0,
+      "last_note_end_tick": 15360,
+      "requested_end_tick": 15360,
+      "duration_weighted_diatonic_fraction": 1.0,
+      "peak_polyphony": 5,
+      "velocity_values": [
+        127
+      ],
+      "pitch_class_note_counts": {
+        "0": 16,
+        "2": 21,
+        "4": 18,
+        "5": 18,
+        "7": 13,
+        "9": 20,
+        "10": 9
+      },
+      "load_seconds": 0.596684,
+      "generation_seconds": 11.1373,
+      "sampled_peak_footprint_bytes": 794135424,
+      "stop_reason": "timeline_limit",
+      "quality_approved": false,
+      "name": "piano-d-minor-7-natural",
+      "seed": 7,
+      "bpm": 100,
+      "bars": 8,
+      "sharps": -1,
+      "minor": 1,
+      "midi_sha256": "32303152b2961b37c32c6f3cc2b7d55f86ae9198185cfb1dc3973319287e048e",
+      "audition": {
+        "renderer": "Apple system DLS, listening reference only",
+        "sample_rate": 44100,
+        "frames": 934920,
+        "sample_peak": 0.495576,
+        "clipped_samples": 0
+      }
+    },
+    {
+      "schema": 1,
+      "midi_matches_performance": true,
+      "notes": 95,
+      "first_note_tick": 0,
+      "last_note_end_tick": 15360,
+      "requested_end_tick": 15360,
+      "duration_weighted_diatonic_fraction": 0.9881188118811881,
+      "peak_polyphony": 5,
+      "velocity_values": [
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "pitch_class_note_counts": {
+        "0": 13,
+        "2": 6,
+        "4": 9,
+        "5": 25,
+        "7": 19,
+        "9": 12,
+        "10": 10,
+        "11": 1
+      },
+      "load_seconds": 2.87551,
+      "generation_seconds": 9.16377,
+      "sampled_peak_footprint_bytes": 571460800,
+      "stop_reason": "timeline_limit",
+      "quality_approved": false,
+      "name": "piano-f-major-91-profiled",
+      "seed": 91,
+      "bpm": 90,
+      "bars": 8,
+      "sharps": -1,
+      "minor": 0,
+      "midi_sha256": "0e5bda65a255b34b47f42b41aaa7501f5b1a72701ac91f14b5882e18339f9f39",
+      "audition": {
+        "renderer": "Apple system DLS, listening reference only",
+        "sample_rate": 44100,
+        "frames": 1029000,
+        "sample_peak": 0.097506,
+        "clipped_samples": 0
+      },
+      "process": {
+        "sampled_peak_rss_bytes": 1079689216,
+        "rss_sampling_interval_seconds": 0.25,
+        "process_wall_seconds": 14.221774792007636,
+        "exit_code": 0
+      }
+    }
+  ],
+  "callback_microbenchmarks": {
+    "idle": {
+      "sample_rate": 44100,
+      "block_size": 64,
+      "callbacks": 12000,
+      "p50_us": 9.708,
+      "p99_us": 10.792,
+      "max_us": 72.791,
+      "deadline_us": 1451.25,
+      "deadline_misses": 0
+    },
+    "concurrent_work": {
+      "sample_rate": 44100,
+      "block_size": 64,
+      "callbacks": 12000,
+      "p50_us": 10.125,
+      "p99_us": 37.041,
+      "max_us": 1592.25,
+      "deadline_us": 1451.25,
+      "deadline_misses": 1
+    },
+    "lower_priority_evaluator_process_active": {
+      "sample_rate": 44100,
+      "block_size": 64,
+      "callbacks": 12000,
+      "p50_us": 10.375,
+      "p99_us": 17.75,
+      "max_us": 82,
+      "deadline_us": 1451.25,
+      "deadline_misses": 0
+    }
+  },
+  "callback_method": "Unpaced, normal-thread timing of 12000 hybrid callbacks at 44100 Hz / 64 samples; no audio device or DAW. One missed synthetic deadline is retained. Process-active overlap is not instrumented for every callback.",
+  "spectrum": {
+    "saw_alias_reduction_db": 24.5906,
+    "pulse_alias_reduction_db": 22.5191,
+    "method": "4096-point coherent FFT, fundamental bin 997; isolated oscillators only"
+  },
+  "checks": {
+    "native_ctest_suites_passed": 2,
+    "rosetta_processor_passed": true,
+    "rosetta_audio_quality_passed": true,
+    "python_integrity_format_tests_passed": 14,
+    "universal_bundle_verification_passed": true
+  },
+  "reproducibility": {
+    "f_major_seed91_midi_byte_identical_across_runs": true
+  },
+  "source_sha256": {
+    "Source/AudioQuality.h": "233e710727162ab9713435e8388bc73917787b36c92f3919c15e39500b85d81b",
+    "Source/PluginProcessor.cpp": "5cbda419afa3e0661811cb1bbf137e1fbd8823c449ff2b7fc98d3128e16b36f9",
+    "Source/OnnxEngine.cpp": "c379ee7b3a56fca7c0bef66ea462ad2404f1283bf9d16d971b969748cf765fe6",
+    "tools/midi/main.cpp": "6ec7a267545634cd088cf7d68d5652249777c914fc02c374855e626b49a63f51",
+    "tools/midi/evaluate.py": "9b916ae8eaeacc11eae012ccc8a798786eed52a56e8739b629bd5d8274197704",
+    "tools/midi/audition_mac.cpp": "7adb636a7ff879829863fd3bc04e9eef51da30c1d8ad47af5d7e431a3620399e"
+  },
+  "limitations": [
+    "Candidate training-data commercial terms unresolved",
+    "No subjective listening approval",
+    "No qualified production instrument",
+    "No energy/thermal measurement",
+    "No 8 GB or Windows inference qualification",
+    "No full DAW stress session",
+    "No trained model integrated into shipped plugin"
+  ]
+}

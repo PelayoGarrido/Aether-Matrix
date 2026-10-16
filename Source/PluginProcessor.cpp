@@ -219,6 +219,7 @@ float AetherMatrixProcessor::synthesizeMultiStyleSample(
     double& subPhase,
     double& chordPhase1,
     double& chordPhase2,
+    double& vibratoPhase,
     float leadFreq,
     float bassFreq,
     float& leadEnv,
@@ -226,7 +227,7 @@ float AetherMatrixProcessor::synthesizeMultiStyleSample(
     float& chordEnv,
     const std::array<float, 5>& w,
     float tension,
-    float contour,
+    const aether::audio::Decay& decay,
     juce::Random& localRng) noexcept
 {
     const float wHipHop    = w[0];
@@ -235,9 +236,12 @@ float AetherMatrixProcessor::synthesizeMultiStyleSample(
     const float wElectro   = w[3];
     const float wCinema    = w[4];
 
-    double vibrato = 1.0 + std::sin(subPhase * 12.0 * juce::MathConstants<double>::twoPi) * (0.004 * (wClassical + wCinema));
+    vibratoPhase += 5.2 / sampleRate;
+    if (vibratoPhase >= 1.0) vibratoPhase -= 1.0;
+    const double vibrato = 1.0 + std::sin(vibratoPhase * juce::MathConstants<double>::twoPi) * (0.004 * (wClassical + wCinema));
+    const double leadIncrement = std::min(0.45, static_cast<double>(leadFreq) * vibrato / sampleRate);
 
-    leadPhase += (static_cast<double>(leadFreq) * vibrato) / sampleRate;
+    leadPhase += leadIncrement;
     if (leadPhase >= 1.0) leadPhase -= 1.0;
 
     subPhase += static_cast<double>(bassFreq) / sampleRate;
@@ -253,27 +257,26 @@ float AetherMatrixProcessor::synthesizeMultiStyleSample(
     float subWave = std::tanh(sine(subPhase) * (1.4f + 2.2f * wHipHop + 1.8f * wElectro)) * bassEnv;
 
     float chordWave = (sine(chordPhase1)
-                     + 0.7f * sine(chordPhase2)
-                     + 0.35f * sine(chordPhase1 * 2.0)) * 0.35f * chordEnv;
+                     + 0.7f * sine(chordPhase2) * aether::audio::partialGain(bassFreq * 2.9966, sampleRate)
+                     + 0.35f * sine(chordPhase1 * 2.0) * aether::audio::partialGain(bassFreq * 4.0, sampleRate)) * 0.35f * chordEnv;
 
     float pianoPartials = sine(leadPhase)
-                        + 0.45f * sine(leadPhase * 2.0) * leadEnv
-                        + 0.20f * sine(leadPhase * 3.0) * leadEnv;
+                        + 0.45f * sine(leadPhase * 2.0) * leadEnv * aether::audio::partialGain(leadFreq * 2.0, sampleRate)
+                        + 0.20f * sine(leadPhase * 3.0) * leadEnv * aether::audio::partialGain(leadFreq * 3.0, sampleRate);
 
-    float sawCore = 2.0f * static_cast<float>(leadPhase) - 1.0f;
+    const float sawCore = aether::audio::saw(leadPhase, leadIncrement);
     float violinBowed = std::tanh(sawCore * (1.8f + 2.5f * tension))
                       + (localRng.nextFloat() * 2.0f - 1.0f) * 0.025f;
 
-    float electroLead = (sawCore * 0.6f + ((leadPhase < (0.3 + 0.4 * tension)) ? 0.5f : -0.5f));
+    float electroLead = (sawCore * 0.6f + aether::audio::pulse(leadPhase, leadIncrement, 0.3 + 0.4 * tension));
 
     float leadVoice = (pianoPartials * (wPop + wHipHop * 0.8f + wClassical * 0.4f)
                      + violinBowed   * (wClassical * 1.1f + wCinema * 1.1f)
                      + electroLead   * (wElectro * 1.2f + wPop * 0.3f)) * 0.32f * leadEnv;
 
-    float decayBase = 1.0f - ((1.0f - contour) * 0.0010f + 0.00004f);
-    leadEnv  *= (wClassical + wCinema > 0.5f) ? (0.99985f) : decayBase;
-    bassEnv  *= (0.9996f + 0.0003f * contour);
-    chordEnv *= (0.9997f + 0.0002f * contour);
+    leadEnv  *= (wClassical + wCinema > 0.5f) ? decay.sustained : decay.lead;
+    bassEnv  *= decay.bass;
+    chordEnv *= decay.chord;
 
     float mixed = subWave * (0.55f + 0.35f * (wHipHop + wElectro + wCinema))
                 + chordWave * (0.50f + 0.35f * (wPop + wCinema + wHipHop))
@@ -330,7 +333,8 @@ void AetherMatrixProcessor::renderOfflineMasterFiles()
     int microsecondsPerQuarter = static_cast<int>(std::round(60000000.0 / bpm));
     tempoTrack.addEvent(juce::MidiMessage::tempoMetaEvent(microsecondsPerQuarter), 0.0);
 
-    double lPhase = 0.0, sPhase = 0.0, cPhase1 = 0.0, cPhase2 = 0.0;
+    double lPhase = 0.0, sPhase = 0.0, cPhase1 = 0.0, cPhase2 = 0.0, vPhase = 0.0;
+    const auto decay = aether::audio::Decay::forRate(exportSr, contour);
     float lEnv = 0.0f, bEnv = 0.0f, cEnv = 0.0f;
     float lFreq = 220.0f, bFreq = 110.0f;
     juce::Random offlineRng(42);
@@ -396,8 +400,8 @@ void AetherMatrixProcessor::renderOfflineMasterFiles()
         for (int i = 0; i < samplesPerSixteenth; ++i)
         {
             float s = synthesizeMultiStyleSample(
-                exportSr, lPhase, sPhase, cPhase1, cPhase2,
-                lFreq, bFreq, lEnv, bEnv, cEnv, w, tension, contour, offlineRng);
+                exportSr, lPhase, sPhase, cPhase1, cPhase2, vPhase,
+                lFreq, bFreq, lEnv, bEnv, cEnv, w, tension, decay, offlineRng);
 
             left[sampleStart + i]  = s;
             right[sampleStart + i] = s;
@@ -543,6 +547,10 @@ void AetherMatrixProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     rtLeadEnv = rtBassEnv = rtChordEnv = 0.0f;
     lastOnnxSample = 0.0f;
     lastStepIndex = -1.0;
+    heldMidiNote = -1;
+    heldMidiChannel = -1;
+    midiReleasing = false;
+    rtVibratoPhase = 0.0;
 
     rtOnnxScratch.assign(static_cast<size_t>(juce::jlimit(8192, 65536, samplesPerBlock)), 0.0f);
 
@@ -575,6 +583,7 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     if (numSamples <= 0 || buffer.getNumChannels() == 0)
         return;
 
+    const auto decay = aether::audio::Decay::forRate(currentSampleRate, readParameter(6));
     smoothX.setTargetValue(readParameter(0));
     smoothY.setTargetValue(readParameter(1));
 
@@ -582,7 +591,6 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     const int scaleType = static_cast<int>(readParameter(3));
     const float density = readParameter(4);
     const float tension = readParameter(5);
-    const float contour = readParameter(6);
     const float space   = readParameter(7);
 
     double hostBpm = 120.0;
@@ -629,6 +637,7 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
     auto* left  = buffer.getWritePointer(0);
     auto* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr;
+    const float releaseDecay = static_cast<float>(std::exp(std::log(0.001) / (currentSampleRate * 0.020)));
     int scopeIdx = scopeWritePos.load(std::memory_order_relaxed);
 
     for (int i = 0; i < numSamples; ++i)
@@ -640,6 +649,7 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
             if (event.numBytes == 3)
             {
                 const auto status = event.data[0] & 0xf0;
+                const auto midiChannel = event.data[0] & 0x0f;
                 const auto note = event.data[1] & 0x7f;
                 const auto velocity = event.data[2] & 0x7f;
                 if (status == 0x90 && velocity != 0)
@@ -649,11 +659,25 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
                     rtLeadEnv = static_cast<float>(velocity) / 127.0f;
                     rtBassEnv = rtLeadEnv * 0.6f;
                     rtChordEnv = rtLeadEnv * 0.7f;
+                    heldMidiNote = note;
+                    heldMidiChannel = midiChannel;
+                    midiReleasing = false;
                     activeMidiNote.store(note, std::memory_order_relaxed);
                 }
-                else if (status == 0x80 || (status == 0x90 && velocity == 0)
-                         || (status == 0xb0 && (note == 120 || note == 123)))
-                    rtLeadEnv = rtBassEnv = rtChordEnv = 0.0f;
+                else if (((status == 0x80 || (status == 0x90 && velocity == 0))
+                          && note == heldMidiNote && midiChannel == heldMidiChannel)
+                         || (status == 0xb0 && (note == 120 || note == 123)
+                             && (heldMidiChannel == -1 || midiChannel == heldMidiChannel)))
+                {
+                    heldMidiNote = -1;
+                    heldMidiChannel = -1;
+                    midiReleasing = true;
+                    // CC120 is an emergency mute; ordinary note-offs retain a
+                    // short decay instead of discontinuously zeroing the voice.
+                    if (status == 0xb0 && note == 120)
+                        rtLeadEnv = rtBassEnv = rtChordEnv = 0.0f;
+                }
+
             }
         }
         float cx = smoothX.getNextValue();
@@ -685,6 +709,7 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
         if (triggerStep)
         {
+            midiReleasing = false;
             stepCounter = (stepCounter + 1) % 112;
             int degree = (stepCounter + (rng.nextFloat() < tension ? 2 : 0)) % 7;
             int octave = (cy > 0.55f) ? 12 : 0;
@@ -701,10 +726,18 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
             activeMidiNote.store(newMidi, std::memory_order_relaxed);
         }
 
+        if (midiReleasing)
+        {
+            rtLeadEnv *= releaseDecay;
+            rtBassEnv *= releaseDecay;
+            rtChordEnv *= releaseDecay;
+            if (std::max({ rtLeadEnv, rtBassEnv, rtChordEnv }) < 1.0e-7f)
+                rtLeadEnv = rtBassEnv = rtChordEnv = 0.0f;
+        }
         float synthSample = synthesizeMultiStyleSample(
-            currentSampleRate, rtLeadPhase, rtSubPhase, rtChordPhase1, rtChordPhase2,
+            currentSampleRate, rtLeadPhase, rtSubPhase, rtChordPhase1, rtChordPhase2, rtVibratoPhase,
             rtLeadFreq, rtBassFreq, rtLeadEnv, rtBassEnv, rtChordEnv,
-            styleW, tension, contour, rng);
+            styleW, tension, decay, rng);
 
         float cutoffHz = 260.0f * std::pow(32.0f, juce::jlimit(0.0f, 1.0f, cx * 0.65f + cy * 0.35f));
         masterFilter.setCutoffFrequency(juce::jlimit(120.0f, static_cast<float>(currentSampleRate * 0.45), cutoffHz));

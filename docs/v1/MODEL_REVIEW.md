@@ -1,0 +1,20 @@
+# Model review — 2026-10-16
+
+The product needs controllable single-instrument **performance MIDI** plus convincing audio. A text-to-audio model with no matched MIDI is not sufficient. These are source-backed screening results, not endorsements or replicated performance claims.
+
+| Candidate | What it contributes | Decision / unresolved issue |
+| --- | --- | --- |
+| [SkyTNT tv2o-medium](https://huggingface.co/skytnt/midi-model-tv2o-medium) | Small trained MIDI transformer with official ONNX exports; native CPU inference measured here | Evaluation only. Two listed datasets have non-commercial terms; expression/key consistency is unqualified. |
+| [Pianist Transformer](https://github.com/yhj137/PianistTransformer) | Learned piano timing, dynamics and pedal from an existing score; 135M parameters, compact asymmetric encoder/decoder | Relevant expressive-stage architecture. No local execution or commercial provenance clearance. Its [paper](https://arxiv.org/html/2512.02652v1) lists multiple pretraining corpora and ASAP fine-tuning; permissive model/code labels alone do not settle those rights. It performs score-to-performance, not complete composition-to-audio. |
+| [Aria](https://huggingface.co/loubb/aria-medium-base) | Expressive solo-piano continuation and symbolic representations | Author warns of composition memorisation and sensitivity to the input performance. Training-data rights, local resource budget and a generation-specific checkpoint need review; not downloaded. |
+| [MIDI-GPT](https://huggingface.co/Metacreation/MIDI-GPT) | Bar/track infill and expressive generation controls | Official published weights are CC-BY-NC-4.0. Not selected for the required commercial route. |
+| [text2midi](https://huggingface.co/amaai-lab/text2midi) | Text-conditioned symbolic composition | Corpus rights unresolved; published key/chord-control results are insufficient to assume precise control. Do not execute its remote pickle/code quickstart in the product. Not downloaded. |
+| [Stable Audio 3 Small Music](https://huggingface.co/stabilityai/stable-audio-3-small-music) | Local high-fidelity waveform generation, including an Apple implementation | Does not itself deliver a matched editable MIDI performance. Gated conditional licence and download/conversion footprint also need review. Published M4/H200 measurements are not results for this M1. |
+| [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) | Generative audio with current local inference implementations | Does not solve the same-performance MIDI requirement by itself; complete weight/runtime budget and licences need review. Not downloaded. |
+| [MusicGen small](https://huggingface.co/facebook/musicgen-small) | Audio generation | Model card labels weights CC-BY-NC-4.0. Not selected for the commercial requirement. |
+
+The credible architecture separates composition, expressive performance and instrument rendering while sharing one editable event representation. Each stage needs independent musical, resource and provenance validation. Adding random velocity jitter or claiming that an ordinary sampler is a neural waveform generator would not meet the requirement.
+
+If no existing model qualifies, the next route is a model trained on a commercially cleared corpus, with documented rights to compositions and performances. That requires real data acquisition and training/evaluation work; a few procedural phrases do not substitute for it. No model was trained from scratch in this iteration.
+
+Dependency review reused JUCE 8.0.16-security and ONNX Runtime 1.31.0. Official public repository advisory API responses contained no published entries on the review date. This does not rule out unpublished vulnerabilities. [JUCE's security policy](https://github.com/juce-framework/JUCE/security) and [ONNX Runtime's release notes](https://github.com/microsoft/onnxruntime/releases/tag/v1.31.0) remain the primary update sources. The evaluation adds no package-manager dependency, exposes no HTTP service and disables ONNX telemetry. Signed manifests, model isolation and packaged-helper hardening still need implementation before distribution.

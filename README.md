@@ -20,6 +20,8 @@ The metallic editor is shared by the AU, VST3 and standalone builds. Its display
 
 The included `rave_decoder.onnx` is a deterministic sine-basis **reference decoder, not a trained RAVE model**. No checkpoint or training corpus is included. Offline exports use the hybrid synth and will differ from live ONNX playback. Exports contain a stereo audio master and MIDI parts, not separate audio stems. Live MIDI output is disabled to avoid growing a host-owned MIDI buffer in the audio callback.
 
+The next-product investigation targets trained, local single-instrument generation with editable MIDI and matching production audio. It is not yet v1: see the [readiness assessment](docs/v1/READINESS.md) and separate [trained MIDI evaluation tool](tools/midi/README.md). Its candidate weights are not included in the plugin or approved for commercial production.
+
 No account, telemetry, network inference or runtime download is required.
 
 ## Install

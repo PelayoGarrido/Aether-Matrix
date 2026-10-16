@@ -76,6 +76,7 @@ struct OnnxEngine::Impl
 
     Impl()
     {
+        env.DisableTelemetryEvents();
         options.SetIntraOpNumThreads(1);
         options.SetInterOpNumThreads(1);
     }

@@ -3,6 +3,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_dsp/juce_dsp.h>
 #include "OnnxEngine.h"
+#include "AudioQuality.h"
 #include <atomic>
 #include <array>
 #include <vector>
@@ -82,6 +83,7 @@ private:
                                      double& subPhase,
                                      double& chordPhase1,
                                      double& chordPhase2,
+                                     double& vibratoPhase,
                                      float leadFreq,
                                      float bassFreq,
                                      float& leadEnv,
@@ -89,7 +91,7 @@ private:
                                      float& chordEnv,
                                      const std::array<float, 5>& w,
                                      float tension,
-                                     float contour,
+                                     const aether::audio::Decay& decay,
                                      juce::Random& localRng) noexcept;
 
     static constexpr int kRaveWindowSize = 2048;
@@ -128,6 +130,10 @@ private:
     std::atomic<int> scopeWritePos { 0 };
 
     double currentSampleRate = 48000.0;
+    double rtVibratoPhase = 0.0;
+    int heldMidiNote = -1;
+    int heldMidiChannel = -1;
+    bool midiReleasing = false;
     double rtLeadPhase = 0.0, rtSubPhase = 0.0, rtChordPhase1 = 0.0, rtChordPhase2 = 0.0;
     double fallbackStepCounter = 0.0;
     double lastStepIndex = -1.0;

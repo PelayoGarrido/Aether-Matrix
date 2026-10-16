@@ -12,6 +12,7 @@ if(NOT APPLE AND NOT WIN32)
 endif()
 option(AETHER_ENABLE_ONNX "Bundle the optional ONNX CPU decoder" ON)
 option(AETHER_BUILD_TESTS "Build processor and export tests" ON)
+option(AETHER_BUILD_GENERATION_TOOLS "Build offline MIDI candidate evaluation tools (not installed)" OFF)
 set(AETHER_ORT_ROOT "" CACHE PATH "Existing ONNX Runtime 1.31.0 SDK (optional)")
 
 include(FetchContent)
@@ -49,6 +50,13 @@ if(AETHER_ENABLE_ONNX)
     endif()
 endif()
 
+if(AETHER_BUILD_GENERATION_TOOLS)
+    if(NOT AETHER_ENABLE_ONNX)
+        message(FATAL_ERROR "Generation evaluation requires the verified ONNX SDK")
+    endif()
+    add_subdirectory(tools/midi)
+endif()
+
 set(plugin_formats VST3 Standalone)
 if(APPLE)
     list(APPEND plugin_formats AU)
@@ -71,7 +79,7 @@ juce_add_binary_data(AetherModel HEADER_NAME DefaultModel.h NAMESPACE AetherMode
     SOURCES models/rave_decoder.onnx)
 target_sources(Aether_Matrix PRIVATE
     Source/PluginProcessor.cpp Source/PluginProcessor.h
-    Source/PluginEditor.cpp Source/PluginEditor.h
+    Source/PluginEditor.cpp Source/PluginEditor.h Source/AudioQuality.h
     Source/OnnxEngine.cpp Source/OnnxEngine.h)
 target_compile_definitions(Aether_Matrix PUBLIC
     AETHER_ENABLE_ONNX=$<BOOL:${AETHER_ENABLE_ONNX}>
@@ -125,6 +133,13 @@ if(AETHER_BUILD_TESTS)
                     "$<TARGET_FILE_DIR:AetherMatrixTests>/onnxruntime.dll")
         endif()
     endif()
+    add_executable(AetherAudioQualityTests tests/AudioQualityTests.cpp)
+    target_include_directories(AetherAudioQualityTests PRIVATE
+        "$<TARGET_PROPERTY:Aether_Matrix,INCLUDE_DIRECTORIES>" Source)
+    target_compile_definitions(AetherAudioQualityTests PRIVATE JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1)
+    target_link_libraries(AetherAudioQualityTests PRIVATE Aether_Matrix)
+    add_test(NAME audio_quality COMMAND AetherAudioQualityTests)
+    set_tests_properties(audio_quality PROPERTIES TIMEOUT 30)
     add_test(NAME processor COMMAND AetherMatrixTests)
     set_tests_properties(processor PROPERTIES TIMEOUT 90)
 endif()

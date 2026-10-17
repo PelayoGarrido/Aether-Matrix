@@ -42,3 +42,5 @@ Keep this build a **pre-release**. Automated builds and unit checks establish en
 ## v1.0.0-rc.1 — 2026-10-17
 
 Piano Studio now ships with native composition, expression and recorded-render helpers. Its optional weights and sample bank remain outside the installers. This release is deliberately a **candidate**; the stable-release requirements in docs/v1/READINESS.md remain open. Stage 3 evidence records final local verification separately from earlier stages. Publication does not certify clean-machine installation, commercial output rights, musical acceptance or 30-minute DAW reliability.
+
+Final standalone generation, audition/stop, cancellation preserving the previous take and edited MIDI import were observed. The edited first-note velocity 20 -> 55 was preserved, and the rendered MIDI was byte-identical to the supplied edit. Local auval attempts could not discover the temporary user component, including after a discovery-service refresh; this is **not an AU validation pass**. The temporary component was removed and system plugin directories were not modified.

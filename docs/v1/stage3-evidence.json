@@ -339,6 +339,15 @@
     "final_app_generation": true,
     "audition_and_stop": true,
     "cancel_preserves_ready_take": true,
-    "gui_midi_import_pending": true
-  }
+    "gui_midi_import_pending": false,
+    "edited_first_velocity": 55,
+    "edited_midi_byte_identical": true
+  },
+  "auval": {
+    "passed": false,
+    "reason": "Temporary user component was not discovered by auval, including after discovery-service refresh. No host acceptance claimed.",
+    "temporary_component_removed": true
+  },
+  "ci_native_source_commit": "e768df563031aacf47b7143b84f9782f0581918e",
+  "ci_both_platforms_and_source_passed": true
 }

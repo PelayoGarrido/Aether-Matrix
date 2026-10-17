@@ -3,6 +3,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Existing verified tag-build run to publish without rebuilding
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -10,6 +15,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
+    if: github.event_name == 'push'
     uses: ./.github/workflows/build.yml
   source:
     runs-on: ubuntu-latest
@@ -24,24 +30,38 @@ jobs:
       - run: sh -n scripts/build.sh installers/macos/build_pkg.sh installers/macos/postinstall
   release:
     needs: [build, source]
-    if: startsWith(github.ref, 'refs/tags/')
+    if: always() && needs.source.result == 'success' && ((github.event_name == 'push' && needs.build.result == 'success') || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BUILD_RUN: ${{ inputs.build_run_id || github.run_id }}
+      RELEASE_TAG: v1.0.0-rc.1
     steps:
+      # Checkout first: its cleanup must not remove downloaded release assets.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v1.0.0-rc.1
+          persist-credentials: false
+      - name: Verify artifact provenance and successful native jobs
+        shell: bash
+        run: |
+          [[ "$BUILD_RUN" =~ ^[0-9]+$ ]]
+          test "$(git rev-parse HEAD)" = "$(gh api "repos/$GH_REPO/actions/runs/$BUILD_RUN" --jq .head_sha)"
+          test "$(gh api "repos/$GH_REPO/actions/runs/$BUILD_RUN" --jq .path)" = '.github/workflows/release.yml'
+          gh api "repos/$GH_REPO/actions/runs/$BUILD_RUN/jobs?per_page=100" --jq '[.jobs[] | select(.conclusion == "success") | .name] | (index("source") != null and index("build / native (macos-latest)") != null and index("build / native (windows-latest)") != null)' | grep -x true
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: artifacts
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Publish verified release candidate
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          run-id: ${{ env.BUILD_RUN }}
+          github-token: ${{ github.token }}
+      - name: Verify installer checksums and publish candidate
         shell: bash
         run: |
-          test "$RELEASE_TAG" = 'v1.0.0-rc.1'
+          (cd artifacts/Aether-Matrix-macOS && sha256sum -c Aether_Matrix_macOS.pkg.sha256)
+          (cd artifacts/Aether-Matrix-Windows && sha256sum -c Aether_Matrix_Windows_Setup.exe.sha256)
           gh release create "$RELEASE_TAG" --verify-tag --prerelease --latest=false --title "Aether Matrix $RELEASE_TAG — Piano Studio" --notes-file docs/releases/v1.0.0-rc.1.md artifacts/Aether-Matrix-macOS/* artifacts/Aether-Matrix-Windows/*

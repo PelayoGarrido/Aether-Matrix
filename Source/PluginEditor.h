@@ -1,5 +1,6 @@
 #pragma once
 #include "PluginProcessor.h"
+#include "PianoStudioView.h"
 
 
 class AetherLookAndFeel : public juce::LookAndFeel_V4
@@ -44,6 +45,7 @@ private:
     void timerCallback() override;
     void updateMatrixFromMouse(juce::Point<float> pos);
     void promptForOnnxFile();
+    void setStudioVisible(bool);
 
     AetherMatrixProcessor& engineProcessor;
     AetherLookAndFeel customLookAndFeel;
@@ -52,13 +54,16 @@ private:
     juce::Rectangle<float> dragWavPillBounds;
     juce::Rectangle<float> dragMidiPillBounds;
     bool isDraggingMatrix = false;
+    float lastStudioHostBpm=0;
     juce::File pendingDragFile;
 
     std::array<juce::Rectangle<float>, 4> moduleBounds {};
     std::array<float, 256> scopeData {};
 
     juce::ComboBox rootKeySelector, scaleSelector;
-    juce::TextButton loadOnnxButton { "Load model" };
+    juce::TextButton pianoButton{"Piano Studio"};
+    std::unique_ptr<aether::PianoStudioView> pianoView;
+    juce::TextButton loadOnnxButton { "Reference model" };
     juce::TextButton generateButton { "Generate WAV + MIDI" };
     std::unique_ptr<juce::FileChooser> fileChooser;
 

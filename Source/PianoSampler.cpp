@@ -282,7 +282,15 @@ void PianoSampler::render(juce::AudioBuffer<float>& out,int frames)
             if (voice.cursor>=voice.sample->audio.getNumSamples()+taps/2 || voice.envelope<1.0e-7f
                 || (voice.retriggerFade && voice.retriggerFrames<=0)) break;
             const auto sample=voice.kernel->at(voice.sample->audio,voice.cursor);
-            const float gain=voice.gain*voice.envelope*static_cast<float>(voice.retriggerFade ? voice.retriggerFrames/(0.5*impl->rate) : 1.0);
+            // Sample-start alignment may land on a nonzero waveform value.
+            // Smooth each voice boundary, never the whole polyphonic mix:
+            // existing sustained notes must not dip when another key starts.
+            auto smooth=[](double t) {t=std::clamp(t,0.0,1.0);return t*t*(3.0-2.0*t);};
+            constexpr double boundarySeconds=0.001;
+            const double attack=smooth(voice.age/boundarySeconds);
+            const double remaining=(voice.sample->audio.getNumSamples()-1-voice.cursor)/voice.speed;
+            const double tail=smooth(remaining/(impl->rate*boundarySeconds));
+            const float gain=voice.gain*voice.envelope*static_cast<float>(attack*tail*(voice.retriggerFade ? voice.retriggerFrames/(0.5*impl->rate) : 1.0));
             left[i]+=sample[0]*gain;right[i]+=sample[1]*gain;
             voice.cursor+=voice.speed;voice.age+=1.0/impl->rate;
             if (damp) voice.envelope*=decay;

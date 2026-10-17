@@ -13,3 +13,9 @@ Sources: [JUCE security release](https://github.com/juce-framework/JUCE/releases
 The public repository advisory endpoints for JUCE and ONNX Runtime returned no published entries during this review. That is not evidence that either dependency is vulnerability-free. ONNX (the separate model-format package) has its own advisories and must not be confused with the C++ runtime bundled here. Current native release notes include protobuf/ONNX security fixes; do not fall back to old SDKs without reviewing their embedded dependencies. Unknown zero-days cannot be ruled out by an advisory search.
 
 Keep model loading local and restricted to trusted files. Review release notes and advisories again before publishing a new installer. A version bump must update both SDK hashes, the runtime filename in the bundling script, minimum OS assumptions, notices and model tests.
+
+## Native Studio review — 2026-10-17
+
+Stage 3 adds no runtime package: it reuses pinned JUCE/ORT, platform process APIs and original verified external safetensors. The graph exporter and asset acquisition use Python's standard library. The separately authorised Torch 2.14.1 / safetensors 0.8.0 reference environment is not shipped or required by the app; its hash-locked review is in tools/performance/dependency-review.json. Public JUCE/ORT advisory APIs were checked again and returned no entries; this cannot rule out unpublished issues. The reference loader is now byte-restricted, and Studio parses models only in bounded helpers. Unknown zero-days are not detectable by this review.
+
+Existing system FFmpeg was not used for release acceptance and is not a product dependency. True-peak/loudness qualification remains pending a reviewed meter rather than relying on that unrelated installation.

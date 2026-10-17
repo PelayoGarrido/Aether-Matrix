@@ -38,3 +38,7 @@ The editor now uses a wide metallic enclosure, a recessed style-weight display, 
 The website uses an actual native capture, licensed photo/video, and a recorded native four-bar hybrid export. Its former Web Audio approximation and generated SVG decorations have been removed. Native browser animations require no added JavaScript dependencies.
 
 Keep this build a **pre-release**. Automated builds and unit checks establish engineering evidence, but clean-machine installation, real AU/VST3 host validation, stress testing and a complete Windows user-path check remain required before stable promotion. Signing/notarization improve distribution and must be reported separately; open-source status does not require a stable release label or a trained RAVE model.
+
+## v1.0.0-rc.1 — 2026-10-17
+
+Piano Studio now ships with native composition, expression and recorded-render helpers. Its optional weights and sample bank remain outside the installers. This release is deliberately a **candidate**; the stable-release requirements in docs/v1/READINESS.md remain open. Stage 3 evidence records final local verification separately from earlier stages. Publication does not certify clean-machine installation, commercial output rights, musical acceptance or 30-minute DAW reliability.

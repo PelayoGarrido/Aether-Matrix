@@ -1,8 +1,12 @@
 #include "Performance.h"
+#include "PianoFixture.h"
 #include "PianoSampler.h"
+#include "PianoInterpretation.h"
 #include <juce_cryptography/juce_cryptography.h>
 #include <cmath>
 #include <iostream>
+#include <random>
+#include <map>
 #include <stdexcept>
 
 namespace
@@ -41,43 +45,107 @@ void performanceTests()
     invalid=p;invalid.notes[0].duration=100000;rejects([&]{invalid.validate();},"Out-of-bounds duration accepted");
     invalid=p;invalid.pedals[0].value=128;rejects([&]{invalid.validate();},"Invalid pedal accepted");
     invalid=p;invalid.notes[0].duration=1;invalid.notes[0].onsetOffsetUs=0;
-    invalid.notes[0].releaseOffsetUs=invalid.microsAt(480)+500-invalid.microsAt(481);
-    rejects([&]{invalid.validate();},"Sub-millisecond note could collapse on MIDI export");
+    invalid.notes[0].releaseOffsetUs=invalid.microsAt(480)+1-invalid.microsAt(481);
+    rejects([&]{invalid.validate();},"A note that collapses on export was accepted");
     aether::Performance tied;tied.bars=1;tied.notes={{60,80,0,480,0,0},{60,80,480,480,0,0}};
     const auto tie=tied.events();require(tie[1].type==aether::PerformanceEvent::off && tie[2].type==aether::PerformanceEvent::on,"Rearticulation note-off must precede note-on");
 }
-struct Fixture
+void interpretationTests()
 {
-    juce::File root=juce::File::getSpecialLocation(juce::File::tempDirectory).getNonexistentChildFile("aether-piano-tests","",false);
-    juce::File manifest,layout;
-    Fixture()
+    aether::Performance p;p.bars=2;p.sharps=-1;
+    p.notes={{60,80,0,240,0,0},{64,80,480,240,0,0},{60,80,960,240,0,0}};
+    p=aether::PianoInterpretation::score(p);auto tokens=aether::PianoInterpretation::tokens(p);
+    require(tokens.size()==24 && tokens[0]==65 && tokens[1]==261 && tokens[3]==511 && tokens[9]==761,"Native trained-token units differ from reference");
+    require(aether::PianoInterpretation::timingRange(p,0,0)==std::pair{261,262},"First onset must remain fixed");
+    require(aether::PianoInterpretation::timingRange(p,1,40)==std::pair{631,812},"Cumulative tempo constraint incorrect");
+    tokens[9]+=25;tokens[17]-=25;tokens[10]=178;
+    for (size_t i=4;i<8;++i) tokens[i]=5388;
+    const auto expressed=aether::PianoInterpretation::decode(p,tokens);
+    require(expressed.performance.bpm==120 && expressed.performance.sharps==-1,"Interpretation changed tempo/key");
+    require(expressed.performance.notes[1].velocity==45 && expressed.performance.notes[1].onsetOffsetUs==25000,"Learned expression was flattened");
+    require(!expressed.performance.pedals.empty() && expressed.performance.pedals[0].value==127,"Learned sustain missing");
+    auto bad=tokens;bad[0]+=1;rejects([&]{aether::PianoInterpretation::decode(p,bad);},"Interpretation pitch change accepted");
+    bad=tokens;bad[9]+=200;rejects([&]{aether::PianoInterpretation::decode(p,bad);},"Tempo drift accepted");
+    bad=tokens;bad[2]=133;rejects([&]{aether::PianoInterpretation::decode(p,bad);},"Zero-velocity model note accepted");
+    auto overlap=aether::PianoInterpretation::tokens(p);overlap[3]=1761;
+    const auto resolved=aether::PianoInterpretation::decode(p,overlap);
+    require(resolved.resolvedReleases==1 && resolved.performance.notes[0].duration==960,"Same-pitch expression resolution differs from exported performance");
+    auto existing=p;existing.pedals={{0,0,127}};rejects([&]{aether::PianoInterpretation::score(existing);},"Existing pedal silently replaced");
+    existing=p;existing.notes[0].onsetOffsetUs=2000;rejects([&]{aether::PianoInterpretation::score(existing);},"Performance was performed twice");
+    rejects([&]{aether::PianoInterpretation::decode(existing,tokens);},"Decode accepted a previously performed score");
+    existing=p;std::swap(existing.notes[0],existing.notes[1]);rejects([&]{aether::PianoInterpretation::tokens(existing);},"Unsorted model score accepted");
+    existing=p;existing.notes.resize(1);rejects([&]{aether::PianoInterpretation::tokens(existing);},"Single-note context accepted");
+    existing=p;existing.notes={{60,80,0,240,0,0},{64,80,0,240,0,0},{67,80,480,240,0,0}};
+    require(aether::PianoInterpretation::timingRange(existing,1,0)==std::pair{261,307},"Chord onset envelope differs from reference");
+    aether::Performance dense;dense.ppq=1000;dense.bars=4;
+    dense.notes={{60,80,0,10,0,0},{62,80,100,10,0,0},{64,80,120,10,0,0},{67,80,120,10,0,0}};
+    require(aether::PianoInterpretation::timingRange(dense,1,0).second==367,"A late single-note attack can make the next chord impossible");
+    require(aether::PianoInterpretation::timingRange(dense,2,105)==std::pair{261,262},"Dense chord continuation lost feasibility");
+    dense.notes={{60,80,0,10,0,0},{60,80,20,10,0,0},{64,80,100,10,0,0}};
+    require(aether::PianoInterpretation::timingRange(dense,1,0,1).first==262,"Repeated same-pitch attacks can collapse to the same millisecond");
+    dense.notes={{60,80,0,10,0,0},{62,80,200,10,0,0},{64,80,10180,10,0,0},{67,80,10180,10,0,0}};
+    require(aether::PianoInterpretation::timingRange(dense,1,0).first==316,"A long gap can strand the next chord outside the interval vocabulary");
+    require(aether::PianoInterpretation::timingRange(dense,2,55)==std::pair{5251,5252},"Maximum-gap continuation cannot be sampled");
+    // Synthetic boundary stress, not generated music or a listening benchmark.
+    std::mt19937 random(17);
+    for (int trial=0;trial<32;++trial)
     {
-        require(root.getChildFile("Samples").createDirectory().wasOk(),"Fixture directory failed");
-        manifest=root.getChildFile("manifest.json");layout=root.getChildFile("layout.json");
-        auto map=juce::JSON::parse(juce::File(AETHER_PIANO_LAYOUT).loadFileAsString());
-        for (auto& region:*map["regions"].getArray())
-        {region.getDynamicObject()->setProperty("tune_cents",0);region.getDynamicObject()->setProperty("release_seconds",0.1);juce::Array<juce::var> zeros;for(int i=0;i<16;++i) zeros.add(0);region.getDynamicObject()->setProperty("offset_frames",zeros);}
-        require(layout.replaceWithText(juce::JSON::toString(map)),"Fixture layout failed");
-        juce::Array<juce::var> assets;
-        for (const char* name:{"C4v8.flac","C4v16.flac","rel40.flac","harmLC4.flac","harmV3C4.flac","pedalD1.flac","pedalD2.flac","pedalU1.flac","pedalU2.flac"})
+        aether::Performance phrase;phrase.ppq=1000;phrase.bars=4;int64_t tick=0;
+        for (int group=0;group<20;++group)
         {
-            const bool main=juce::String(name).startsWith("C4v");
-            juce::AudioBuffer<float> samples(2,96000);samples.clear();
-            if (main) for (int i=0;i<samples.getNumSamples();++i)
-            {const float v=static_cast<float>(0.2*std::sin(i*2*juce::MathConstants<double>::pi*440/48000)*std::min(1.0,i/64.0)*std::min(1.0,(96000-i)/512.0));samples.setSample(0,i,v);samples.setSample(1,i,v*0.9f);}
-            const auto file=root.getChildFile("Samples").getChildFile(name);
-            std::unique_ptr<juce::OutputStream> stream=file.createOutputStream();juce::FlacAudioFormat format;
-            auto writer=format.createWriterFor(stream,juce::AudioFormatWriterOptions{}.withSampleRate(48000).withNumChannels(2).withBitsPerSample(24));
-            require(writer!=nullptr && writer->writeFromAudioSampleBuffer(samples,0,samples.getNumSamples()),"Fixture FLAC write failed");writer.reset();
-            juce::var entry(new juce::DynamicObject);entry.getDynamicObject()->setProperty("path","Samples/"+juce::String(name));
-            entry.getDynamicObject()->setProperty("bytes",file.getSize());juce::FileInputStream data(file);
-            entry.getDynamicObject()->setProperty("sha256",juce::SHA256(data).toHexString());assets.add(entry);
+            const int count=1+static_cast<int>(random()%4);
+            for (int note=0;note<count;++note) phrase.notes.push_back({50+group%8+note*3,80,tick,2,0,0});
+            tick+=2+static_cast<int>(random()%250);
         }
-        juce::var inventory(new juce::DynamicObject);inventory.getDynamicObject()->setProperty("revision","3382bf9496bba2486f5ab0de55a264d1dfc38404");inventory.getDynamicObject()->setProperty("files",assets);
-        require(manifest.replaceWithText(juce::JSON::toString(inventory)),"Fixture manifest failed");
+        phrase=aether::PianoInterpretation::score(phrase);const auto original=aether::PianoInterpretation::tokens(phrase);
+        for (bool latest:{false,true})
+        {
+            auto generated=original;int64_t elapsed=0;std::map<int,int64_t> starts;
+            for (size_t i=0;i<phrase.notes.size();++i)
+            {
+                const auto found=starts.find(phrase.notes[i].pitch);const auto minimum=found==starts.end() ? 0 : found->second+1;
+                const auto range=aether::PianoInterpretation::timingRange(phrase,i,elapsed,minimum);
+                const auto chosen=latest ? range.second-1 : range.first;generated[i*8+1]=chosen;elapsed+=chosen-261;starts[phrase.notes[i].pitch]=elapsed;
+            }
+            aether::PianoInterpretation::decode(phrase,generated).performance.validate();
+        }
     }
-    ~Fixture(){root.deleteRecursively();} // Only this test's uniquely-created fixture.
-};
+    existing=p;existing.bpm=0;rejects([&]{aether::PianoInterpretation::tokens(existing);},"Invalid tempo reached tokenizer arithmetic");
+    existing=p;existing.notes[0].duration=6000;rejects([&]{aether::PianoInterpretation::tokens(existing);},"Unbounded note reached tokenizer");
+}
+using aether_test::Fixture;
+
+void boundaryTests()
+{
+    // A deliberately discontinuous DC sample exposes clicks that a naturally
+    // faded sine fixture hides. Its full body must remain unchanged after 1 ms.
+    Fixture f(true);
+    for (double rate:{44100.0,48000.0,96000.0})
+    {
+        aether::PianoSampler reference(f.root,f.manifest,f.layout,rate),polyphonic(f.root,f.manifest,f.layout,rate);
+        reference.noteOn(0,{60,127,0,480,0,0});polyphonic.noteOn(0,{60,127,0,480,0,0});
+        juce::AudioBuffer<float> a(2,256),b(2,256);
+        reference.render(a,256);polyphonic.render(b,256);
+        require(std::abs(a.getSample(0,0))<1e-9f,"Nonzero sample start produces a hard note-on step");
+        require(a.getSample(0,static_cast<int>(std::ceil(rate*.001))+2)>.199f,"Boundary fade attenuates the sustained sample body");
+        polyphonic.noteOn(1,{60,127,0,480,0,0});reference.render(a,256);polyphonic.render(b,256);
+        require(std::abs(a.getSample(0,0)-b.getSample(0,0))<1e-7f,"A new attack changes the existing polyphonic mix at its first sample");
+        // Follow both attack and physical end-of-file, across irregular chunks.
+        aether::PianoSampler ending(f.root,f.manifest,f.layout,rate);ending.pedal(127);ending.noteOn(0,{60,127,0,480,0,0});
+        float previous=0;double largest=0;int largestFrame=0;
+        const int total=static_cast<int>(rate*2.01);
+        for (int offset=0;offset<total;)
+        {
+            const int count=std::min(137,total-offset);ending.render(a,count);
+            for (int i=0;i<count;++i) {const float sample=a.getSample(0,i);const double jump=std::abs(sample-previous);if (jump>largest) {largest=jump;largestFrame=offset+i;}previous=sample;}
+            offset+=count;
+        }
+        std::cout<<"Boundary rate="<<rate<<" maximum step="<<largest<<" at frame="<<largestFrame<<'\n';
+        require(largest<.01,"Sample boundary contains an abrupt attack or EOF jump");
+        require(std::abs(previous)<1e-7f,"End-of-sample fade leaves a residual signal");
+    }
+}
+
 void samplerTests()
 {
     Fixture f;
@@ -115,7 +183,7 @@ void samplerTests()
 }
 int main()
 {
-    try {performanceTests();samplerTests();std::cout<<"Performance alignment, bounds, piano dynamics, pedal, chunk invariance and asset integrity passed\n";}
+    try {performanceTests();interpretationTests();boundaryTests();samplerTests();std::cout<<"Performance alignment, trained interpretation codec, piano boundaries, dynamics, pedal, chunk invariance and asset integrity passed\n";}
     catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
     return 0;
 }

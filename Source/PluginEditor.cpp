@@ -121,7 +121,7 @@ void AetherLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& bu
     g.setGradientFill(juce::ColourGradient(colour.brighter(hover ? 0.25f : 0.1f), b.getTopLeft(),
         colour.darker(down ? 0.5f : 0.3f), b.getBottomLeft(), false));
     g.fillRoundedRectangle(b, 12);
-    g.setColour(colour.brighter(0.5f)); g.drawRoundedRectangle(b, 12, 1);
+    g.setColour(button.hasKeyboardFocus(true) ? accents[0] : colour.brighter(0.5f)); g.drawRoundedRectangle(b, 12, button.hasKeyboardFocus(true) ? 2.0f : 1.0f);
 }
 
 AetherMatrixEditor::AetherMatrixEditor(AetherMatrixProcessor& p)
@@ -192,7 +192,18 @@ AetherMatrixEditor::AetherMatrixEditor(AetherMatrixProcessor& p)
     matrixXSlider.setTitle("Style matrix X"); matrixYSlider.setTitle("Style matrix Y");
     matrixXAttachment = std::make_unique<SliderAttachment>(engineProcessor.apvts, "matrixX", matrixXSlider);
     matrixYAttachment = std::make_unique<SliderAttachment>(engineProcessor.apvts, "matrixY", matrixYSlider);
-    startTimerHz(30);
+    if (auto* studio=engineProcessor.getPianoStudio())
+    {
+        pianoView=std::make_unique<aether::PianoStudioView>(*studio,engineProcessor.getPianoPreview());
+        addChildComponent(*pianoView);pianoView->setVisible(engineProcessor.isPianoMode());addAndMakeVisible(pianoButton);
+        pianoButton.setButtonText(engineProcessor.isPianoMode() ? "Matrix synth" : "Piano Studio");
+        pianoButton.setColour(juce::TextButton::buttonColourId,metal);
+        pianoButton.onClick=[this] {
+            setStudioVisible(!pianoView->isVisible());
+        };
+    }
+    if (pianoView) setStudioVisible(engineProcessor.isPianoMode());
+    resized();startTimerHz(30);
 }
 
 AetherMatrixEditor::~AetherMatrixEditor()
@@ -205,9 +216,18 @@ AetherMatrixEditor::~AetherMatrixEditor()
     setLookAndFeel(nullptr);
 }
 
+void AetherMatrixEditor::setStudioVisible(bool visible)
+{
+    pianoView->setVisible(visible);if (visible) pianoView->toFront(false);
+    for (auto* component:std::array<juce::Component*,14>{&rootKeySelector,&scaleSelector,&loadOnnxButton,&generateButton,
+        &densitySlider,&tensionSlider,&contourSlider,&spaceSlider,&matrixXSlider,&matrixYSlider,
+        &densityLabel,&tensionLabel,&contourLabel,&spaceLabel}) if (component) component->setVisible(!visible);
+    engineProcessor.setPianoMode(visible);pianoButton.setButtonText(visible ? "Matrix synth" : "Piano Studio");
+}
+
 void AetherMatrixEditor::promptForOnnxFile()
 {
-    fileChooser = std::make_unique<juce::FileChooser>("Select compatible ONNX decoder", juce::File{}, "*.onnx");
+    fileChooser = std::make_unique<juce::FileChooser>("Select a copy of the bundled reference decoder", juce::File{}, "*.onnx");
     const juce::Component::SafePointer<AetherMatrixEditor> safeThis(this);
     fileChooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                              [safeThis](const juce::FileChooser& fc)
@@ -302,7 +322,13 @@ void AetherMatrixEditor::mouseUp(const juce::MouseEvent&)
 
 void AetherMatrixEditor::timerCallback()
 {
-    generateButton.setEnabled(!engineProcessor.isGenerating());
+    if (pianoView && pianoView->isVisible())
+    {
+        const float bpm=engineProcessor.currentHostBpm.load(std::memory_order_relaxed);
+        if (std::abs(bpm-lastStudioHostBpm)>.001f) {lastStudioHostBpm=bpm;repaint(990,24,150,36);}
+        return;
+    }
+    generateButton.setEnabled(!engineProcessor.isGenerating() && (!engineProcessor.getPianoStudio() || !engineProcessor.getPianoStudio()->status().busy));
     if (!isShowing())
         return;
     engineProcessor.copyVisualScopeData(scopeData);
@@ -317,7 +343,8 @@ void AetherMatrixEditor::paint(juce::Graphics& g)
     g.setColour(light); g.setFont(juce::FontOptions(28.0f, juce::Font::bold));
     g.drawText("AETHER MATRIX", 32, 22, 310, 40, juce::Justification::centredLeft);
     g.setFont(juce::FontOptions(18.0f)); g.setColour(juce::Colour(0xffc0c5d4));
-    g.drawText(juce::String(juce::roundToInt(engineProcessor.currentHostBpm.load())) + " BPM", 1000, 24, 125, 36, juce::Justification::centredRight);
+    g.drawText(juce::String(juce::roundToInt(engineProcessor.currentHostBpm.load())) + (pianoView && pianoView->isVisible() ? " HOST BPM" : " BPM"), 1000, 24, 125, 36, juce::Justification::centredRight);
+    if (pianoView && pianoView->isVisible()) return;
     g.setGradientFill(juce::ColourGradient(ink, matrixBounds.getTopLeft(), juce::Colour(0xff171824), matrixBounds.getBottomLeft(), false));
     g.fillRoundedRectangle(matrixBounds, 28);
     g.setColour(juce::Colour(0xff9297a7)); g.drawRoundedRectangle(matrixBounds.expanded(1), 28, 1.5f);
@@ -416,9 +443,11 @@ void AetherMatrixEditor::paint(juce::Graphics& g)
 
 void AetherMatrixEditor::resized()
 {
-    rootKeySelector.setBounds(420, 25, 90, 36);
-    scaleSelector.setBounds(520, 25, 230, 36);
-    loadOnnxButton.setBounds(770, 23, 160, 40);
+    pianoButton.setBounds(320,23,160,40);
+    if (pianoView) pianoView->setBounds(32,90,1096,600);
+    rootKeySelector.setBounds(pianoView ? 490 : 420, 25, 90, 36);
+    scaleSelector.setBounds(pianoView ? 590 : 520, 25, pianoView ? 180 : 230, 36);
+    loadOnnxButton.setBounds(pianoView ? 790 : 770, 23, 160, 40);
     matrixBounds = {32, 102, 1096, 270};
     matrixXSlider.setBounds(27, 407, 40, 200);
     matrixYSlider.setBounds(1093, 407, 40, 200);

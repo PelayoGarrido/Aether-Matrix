@@ -1,6 +1,6 @@
 # Learned piano expression — development evaluator
 
-This evaluates **real pretrained Pianist Transformer weights** on the CPU, separately from the released plugin. It takes a score and predicts note intervals, velocities, durations and sustain-pedal values. It does not compose the score or generate a neural waveform. The recorded-piano helper renders the resulting shared performance to audio and matching editable MIDI.
+This evaluates **real pretrained Pianist Transformer weights** on the CPU, through a native helper packaged with Piano Studio, or the independent Python reference evaluator. It takes a score and predicts note intervals, velocities, durations and sustain-pedal values. It does not compose the score or generate a neural waveform. The recorded-piano helper renders the resulting shared performance to audio and matching editable MIDI.
 
 ## Provenance and suitability
 
@@ -11,7 +11,17 @@ This evaluates **real pretrained Pianist Transformer weights** on the CPU, separ
 
 No training data is concealed, relabelled as our own or downloaded in bulk. Adding more data does not remove existing conditions. The repository code, optional weights, instruments and generated outputs have distinct provenance. Free/open-source distribution does not itself waive third-party conditions.
 
-## Isolated environment and disk budget
+## Native app path
+
+Piano Studio uses `PianistEngine` with embedded fixed ONNX encoder/decoder graphs and verified original BF16 safetensors. Encoder and decoder sessions run sequentially with two CPU threads; the runtime needs no Python or Torch. `export_native.py` reproduces the tiny architecture graphs using the standard library; original weights remain external and unbundled. `checkpoint-tensors.json` and `native-manifest.json` pin the contract.
+
+```sh
+build/AetherPianistPerform .build-downloads/pianist-transformer INPUT_SCORE.json NEW_JOB 42 --quiet
+```
+
+Native sampling is deterministic on the tested native backend but intentionally differs from Torch's random stream. Teacher-forced numerical parity is checked separately using `compare_native.py`; it is not a claim of identical generated performances or musical quality. Backward feasible timing windows preserve upcoming chord/interval constraints; retained probability mass and boundary corrections remain visible in each report.
+
+## Isolated reference environment and disk budget
 
 Python is an explicitly authorised exception for local AI evaluation/export; the web continues using pnpm. This setup targets **macOS Apple Silicon / Python 3.12**, with two CPU threads. Other hardware/framework paths are unqualified.
 
@@ -45,10 +55,10 @@ python3 tools/piano/verify.py build/piano-evidence/NEW_AUDIO_JOB
 - Velocity zero and zero duration are excluded. Same-pitch releases are resolved once, and note tails at the requested boundary are clipped once with counts recorded. The resulting schema 2 performance drives **both** MIDI and WAV.
 - Before each inference, compact encoder/logits are compared against selected original eager-layer definitions in float32, and cached decoding against a full-prefix pass. This checks the fixed no-padding context, not every upstream framework/dtype/model configuration. `reference_layers.py` retains original selected definitions with limited imports/aliases for numerical validation.
 
-Each job is exclusive, with an OS advisory lock allowing only one model job at a time, two CPU threads, reduced priority, 150-second supervision, a sampled 2 GiB RSS cap on macOS, bounded logs and a 3 GiB disk reserve. Cancellation terminates/kills the child. Failed jobs retain diagnostics; success requires `evaluation.json` and matching performance hash. This is process isolation **without an OS sandbox**, not yet an app-supervised packaged service.
+Each job is exclusive, with an OS advisory lock allowing only one model job at a time, two CPU threads, reduced priority, 150-second supervision, a sampled 2 GiB RSS cap on macOS, bounded logs and a 3 GiB disk reserve. Cancellation terminates/kills the child. Failed jobs retain diagnostics; success requires `evaluation.json` and matching performance hash. This is process isolation **without an OS sandbox**. Piano Studio supervises the packaged native helper independently of this Python reference evaluator.
 
 `regression-score.json` is an original, hand-authored four-bar test score, **not an AI composition or training corpus**. It tests expression separately. Primary end-to-end evidence reuses the previously generated SkyTNT scores with their original provenance.
 
-## Still required for v1
+## Still required for stable v1
 
-Broad musical evaluation, appropriate composition controls, DAW/transport/edit/regeneration integration, cancellation/recovery UX, packaged helpers, repeated/long-job stress tests, verified support limits, sample realism/true-peak/loudness review, external musician acceptance and a documented rights decision. Passing event/format/numerical tests is not production-quality musical approval.
+Broad musical evaluation, appropriate composition controls, host transport integration, project restoration, native first-run asset setup, repeated/long-job stress tests, verified support limits, sample realism/true-peak/loudness review, external musician acceptance and a documented rights decision. Passing event/format/numerical tests is not production-quality musical approval.

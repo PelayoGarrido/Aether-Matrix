@@ -92,10 +92,17 @@ void Performance::validate() const
             || n.releaseOffsetUs<-500000 || n.releaseOffsetUs>500000)
             throw std::runtime_error("Invalid note range or timeline");
         const auto begin=microsAt(n.tick,n.onsetOffsetUs),finish=microsAt(n.tick+n.duration,n.releaseOffsetUs);
-        // Sub-millisecond notes are outside this piano contract and could
-        // collapse to a zero-length note when quantised to the SMF timebase.
-        if (begin<0 || finish-begin<1000 || finish-begin>180000000)
+        if (begin<0 || finish<=begin || finish-begin>180000000)
             throw std::runtime_error("Invalid expressive note timing");
+        // Validate the actual export clocks instead of an arbitrary minimum.
+        // A valid 1 ms learned note can become 0.9375 ms in 9600-PPQ MIDI at
+        // 40 BPM. Importing that editable MIDI must not reject our own output.
+        const double midiScale=9600.0/(60000000/bpm);
+        if (juce::roundToInt(finish*midiScale)<=juce::roundToInt(begin*midiScale))
+            throw std::runtime_error("Note collapses at the MIDI export precision");
+        for (double rate:{44100.0,48000.0,96000.0})
+            if (std::llround(finish*rate/1e6)<=std::llround(begin*rate/1e6))
+                throw std::runtime_error("Note collapses at an audio export rate");
         intervals.emplace_back(n.pitch,begin,finish);
     }
     std::sort(intervals.begin(),intervals.end());
@@ -129,6 +136,7 @@ std::vector<PerformanceEvent> Performance::events() const
 }
 juce::MidiFile Performance::midi() const
 {
+    validate();
     constexpr int outputPpq=9600;
     juce::MidiMessageSequence track;
     track.addEvent(juce::MidiMessage::tempoMetaEvent(60000000/bpm),0);

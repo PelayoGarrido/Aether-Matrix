@@ -1,6 +1,6 @@
 # v1 readiness — 2026-10-17
 
-**Decision: do not release v1.** The public plugin remains a preview synthesizer. The trained composition/expression and recorded-piano experiments are separate developer tools, not a feature shipped in the plugin. Successful local inference does not establish production-quality music, a commercially cleared model, or DAW reliability.
+**Decision: publish v1.0.0-rc.1 as a candidate; stable v1 remains blocked.** Piano Studio is now integrated into AU/VST3/Standalone with bundled native helpers. Successful local inference does not establish production-quality music, a commercially cleared model, or DAW reliability. This status takes precedence over earlier stage descriptions below.
 
 ## Product requirement
 
@@ -20,7 +20,7 @@ See [measurement evidence](evidence.json) and [reproduction instructions](../../
 
 ## Stage 2: learned expression and recorded piano
 
-A shared schema 2 performance now carries score ticks, microsecond note offsets and continuous sustain. The fixed-checkpoint Pianist Transformer evaluator predicts real learned dynamics, intervals, durations and pedal; a native optional Salamander instrument renders the same events to PCM24 stereo and 9600-PPQ MIDI. These are developer tools, not features in the released app. See the [expression workflow](../../tools/performance/README.md), [recorded piano workflow](../../tools/piano/README.md) and [stage 2 evidence](stage2-evidence.json).
+A shared schema 2 performance now carries score ticks, microsecond note offsets and continuous sustain. The fixed-checkpoint Pianist Transformer evaluator predicts real learned dynamics, intervals, durations and pedal; a native optional Salamander instrument renders the same events to PCM24 stereo and 9600-PPQ MIDI. These began as separate developer tools; stage 3 now integrates the native path into the release candidate. See the [expression workflow](../../tools/performance/README.md), [recorded piano workflow](../../tools/piano/README.md) and [stage 2 evidence](stage2-evidence.json).
 
 Free-expression runs on the three current AI-composed scores failed timing/tempo criteria. Tempo-constrained decoding now bounds cumulative onsets during sampling, without post hoc stretching: pitch/key/tempo remain tied to the supplied score, while learned velocity, articulation and pedal vary. The retained timing probability mass is recorded so constraints cannot conceal model disagreement. This is technical progress, not musical approval. One obsolete score trial is excluded from the candidate evidence.
 
@@ -48,7 +48,7 @@ Listening references use the already-installed Apple DLS instrument. They help a
 | Trained musical generation | Local inference and controllable complete performances, useful across representative prompts/seeds | Candidate inference works; consistency and expression unqualified |
 | Performance expression | Musical phrasing, velocity, articulation, sustain and timing without random cosmetic humanisation | Learned CPU stage implemented; constrained timing passes examples, broad musical quality unqualified |
 | Audio production quality | A qualified instrument/renderer, convincing dynamics and releases, no unexplained clipping, discontinuities or rendering defects | Optional recorded piano implemented and technically verified; production realism/true-peak/listening review pending |
-| MIDI/audio agreement | One versioned performance drives playback, MIDI and audio; edits regenerate the same events; tempo and tails preserved | Shared expressive performance drives native WAV/MIDI; independent event checks pass; plugin editing/regeneration integration missing |
+| MIDI/audio agreement | One versioned performance drives playback, MIDI and audio; edits regenerate the same events; tempo and tails preserved | Shared expressive performance drives native WAV/MIDI; independent event checks pass; native MIDI import/regeneration and immutable audition implemented; real DAW drag/edit acceptance pending |
 | Real-time reliability | AU/VST3 host tests at 44.1/48 kHz and 64/128/256 samples, cancellation, repeated jobs and 30-minute load sessions | Synthetic tests only; one deadline exceeded under concurrent work |
 | Hardware limits | Measured peak memory, latency, disk consumption, thermal/energy behaviour and recovery on every supported baseline | One M1/16 GB evaluated; no validated support matrix |
 | Musical acceptance | Blinded, loudness-matched review by producers of representative complete phrases against a suitable reference instrument | Not performed |
@@ -56,10 +56,22 @@ Listening references use the already-installed Apple DLS instrument. They help a
 
 A zero-miss synthetic timing sample does not cancel a failure in another sample. The callback benchmark runs unpaced on a normal thread and does not reproduce an audio-device deadline, real-time thread priority or a DAW project. It cannot certify absence of dropouts.
 
-## Next engineering decisions
+## Stage 3: native Piano Studio release candidate
 
-1. Resolve the commercially usable composition and performance models before integrating or bundling weights. Non-commercial research candidates may be evaluated with honest provenance where their terms permit; no blanket commercial clearance is inferred. Do not spend storage on more checkpoints merely because their code is permissively licensed.
-2. Use a shared performance representation with high-resolution musical time, explicit note durations/velocity, pedal and articulation events. Keep score time and expressive timing together; a global tempo map must not unintentionally change other tracks in an existing DAW session.
-3. Qualify a production instrument and its disk-streaming/render path. A conventional licensed sampler is compatible with genuinely AI-generated composition/performance, but must be labelled accurately if the waveform itself is not neurally generated.
-4. Put inference in a crash-isolated helper with one bounded job, cancellation, resource checks and an atomic result handoff. The current CLI is an evaluation component; it is not yet a packaged, app-supervised service.
-5. Run musical and DAW acceptance tests before deciding on v1. Existing previews and the finished website must not imply that those gates have passed.
+The app now composes, interprets and renders through three bundled subprocesses. Only validated, complete output is committed as a take, then decoded for allocation-free audition. Failed/cancelled jobs retain diagnostics and preserve the previous successful take. DAW-edited MIDI can be imported for direct rendering. The fixed native expression architecture uses original verified BF16 weights; no Python runtime is needed by the product.
+
+Native numerical checks cover three score fixtures and a maximum 512-note input. Final timing constraints use backward feasible onset windows rather than repairing future impossible choices after sampling. Retained timing mass, clipped tails and repeated-pitch corrections are reported. Some controls still produce scores outside the model vocabulary: a fresh 91 BPM run was correctly rejected for a 5274.725 ms note. The pipeline does not silently shorten those inputs or claim every control combination succeeds.
+
+The existing eight-bar F-major, 90 BPM measurement completed in about 17 seconds on one M1 / 16 GB machine. This earlier measurement predates the final feasibility mask; final release evidence is recorded separately in [stage 3 evidence](stage3-evidence.json). Native expression sampled approximately 1.13 GB RSS / 1.05 GB physical footprint in one measured run. An earlier 531 MB estimate was under-sampled and is superseded. No broad memory, battery or cross-hardware efficiency advantage is claimed.
+
+The current app does not persist takes/resource selection into DAW project state, follow transport during Studio audition, or play live incoming MIDI through the recorded piano. Acquisition is explicit through pinned source downloaders. The UI calls itself a development preview; installers omit optional weights and sample assets. [Usage and supported MIDI](PIANO_STUDIO.md).
+
+## Remaining stable-release gates
+
+1. Document a composition/expression model rights decision compatible with commercial music production, or replace the models. Model-card labels alone do not resolve underlying corpus/output questions.
+2. Improve and assess complete musical performances across representative keys, tempi, lengths and seeds, with blinded producer listening. Repetitive triads and uniform velocities observed in existing composition tests remain adverse evidence.
+3. Qualify the recorded instrument for realism, releases, true peak and loudness. A conventional sampler is compatible with trained AI composition, but the waveform is not neurally generated.
+4. Test real AU/VST3 editing, drag/export, project reopen, multiple instances, unload/cancel, device deadlines and at least 30-minute load sessions on each supported baseline. Synthetic callback timing is not device acceptance.
+5. Complete clean-machine installation/uninstallation, native asset setup, project restoration and the supported-hardware matrix. Report signing/notarisation separately from build integrity.
+
+The candidate publication is an inspectable engineering milestone. It does not waive these gates or certify commercial production quality.

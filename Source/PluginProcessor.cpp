@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-AetherMatrixProcessor::AetherMatrixProcessor(juce::File outputDirectory)
+AetherMatrixProcessor::AetherMatrixProcessor(juce::File outputDirectory,juce::File nativeHelpers)
     : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       juce::Thread("AetherMatrix_Worker"),
       apvts(*this, nullptr, "PARAMETERS", createParameterLayout()),
@@ -26,11 +26,17 @@ AetherMatrixProcessor::AetherMatrixProcessor(juce::File outputDirectory)
                                              "density", "tension", "contour", "space" };
     for (size_t i = 0; i < ids.size(); ++i)
         parameters[i] = apvts.getRawParameterValue(ids[i]);
+#if AETHER_PIANO_STUDIO
+    pianoStudio=std::make_unique<aether::PianoStudio>(pianoPreview,exportDirectory,nativeHelpers==juce::File{} ? aether::NativeProcess::helpers() : nativeHelpers);
+#else
+    juce::ignoreUnused(nativeHelpers);
+#endif
     startThread(juce::Thread::Priority::normal);
 }
 
 AetherMatrixProcessor::~AetherMatrixProcessor()
 {
+    pianoStudio.reset();
     signalThreadShouldExit();
     notify();
     stopThread(-1);
@@ -539,6 +545,7 @@ void AetherMatrixProcessor::run()
 void AetherMatrixProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     currentSampleRate = std::isfinite(sampleRate) ? juce::jlimit(22050.0, 192000.0, sampleRate) : 48000.0;
+    pianoPreview.prepare(currentSampleRate);
     exportSampleRate.store(currentSampleRate, std::memory_order_relaxed);
     audioActive.store(currentSampleRate == 48000.0, std::memory_order_release);
     notify();
@@ -607,6 +614,16 @@ void AetherMatrixProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         }
     }
     currentHostBpm.store(static_cast<float>(hostBpm), std::memory_order_relaxed);
+    const bool studioMode=pianoMode.load(std::memory_order_acquire);
+    if (studioMode!=audioPianoMode) {audioPianoMode=studioMode;masterReverb.reset();masterFilter.reset();}
+    if (pianoPreview.render(buffer) || studioMode)
+    {
+        audioActive.store(false,std::memory_order_release);
+        heldMidiNote=heldMidiChannel=-1;midiReleasing=false;rtLeadEnv=rtBassEnv=rtChordEnv=lastOnnxSample=0;
+        audioFifo.finishedRead(audioFifo.getNumReady());midiMessages.clear();
+        currentRmsLevel.store(buffer.getRMSLevel(0,0,numSamples),std::memory_order_relaxed);return;
+    }
+    audioActive.store(currentSampleRate==48000.0,std::memory_order_release);
 
     auto midiIterator = midiMessages.cbegin();
     const auto midiEnd = midiMessages.cend();

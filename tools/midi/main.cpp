@@ -1,3 +1,4 @@
+#include "../../Source/NativeEntry.h"
 // Offline model evaluation, never called from the DAW audio thread.
 // V2 event protocol / KV-cache algorithm adapted from SkyTNT/midi-model,
 // commit f504d5cb58f769ab0f2909c679238f6621034573 (Apache-2.0).
@@ -38,6 +39,8 @@ using Event = std::array<int64_t, 8>;
 constexpr int vocabulary = 3406, embedding = 1024, ticksPerBeat = 480;
 volatile std::sig_atomic_t interrupted = 0;
 void onSignal(int) { interrupted = 1; }
+
+#include "VerifiedModels.h"
 
 // Parameter order is part of the trained tokenizer contract, not JSON key order.
 enum Param { time1, time2, duration, track, channel, pitch, velocity, patch,
@@ -237,7 +240,7 @@ int integer(const char* text, int low, int high)
     return n;
 }
 
-int main(int argc, char** argv)
+static int runNative(int argc, char** argv)
 {
     try
     {
@@ -246,7 +249,7 @@ int main(int argc, char** argv)
             std::cerr << "Usage: AetherMidiEvaluate MODEL_DIR OUTPUT_PREFIX [events 8..512] [seed 0..2147483647] [bpm 40..300] [bars 1..32] [GM_program 0..127] [sharps -7..7] [minor 0..1]\n";
             return 2;
         }
-        const fs::path root = fs::absolute(argv[1]), prefix = fs::absolute(argv[2]);
+        const fs::path root = fs::absolute(aetherUtf8Path(argv[1])), prefix = fs::absolute(aetherUtf8Path(argv[2]));
         const int count = argc > 3 ? integer(argv[3],8,512) : 64;
         const int seed = argc > 4 ? integer(argv[4],0,2147483647) : 42;
         const int tempo = argc > 5 ? integer(argv[5],40,300) : 120;
@@ -257,7 +260,8 @@ int main(int argc, char** argv)
         for (const auto& [name,size] : std::array<std::pair<const char*,uintmax_t>,2>{{{"model_base.onnx",821713887},{"model_token.onnx",116661381}}})
             if (!fs::is_regular_file(root/name) || fs::file_size(root/name) != size)
                 throw std::runtime_error("Run download_candidate.py to obtain the pinned verified model pair");
-        if (fs::exists(prefix.string()+".mid") || fs::exists(prefix.string()+".json"))
+        auto midiPath=prefix,jsonPath=prefix;midiPath+=".mid";jsonPath+=".json";
+        if (fs::exists(midiPath) || fs::exists(jsonPath))
             throw std::runtime_error("Output already exists");
         if (fs::space(prefix.parent_path()).available < 3ULL*1024*1024*1024)
             throw std::runtime_error("Preserve 3 GiB free before model evaluation");
@@ -270,6 +274,8 @@ int main(int argc, char** argv)
         if (!SetPriorityClass(GetCurrentProcess(),BELOW_NORMAL_PRIORITY_CLASS))
             std::cerr << "Could not lower evaluator scheduling priority\n";
 #endif
+        verifyMidiModel(root/"model_base.onnx",821713887,"1af68e16a0509936caeb70d322ab30619d784c7af72df019f3a59276c67c1bc4",interrupted);
+        verifyMidiModel(root/"model_token.onnx",116661381,"cce9376abe8f5c8d51d1b110580cc8501d38679af55ebd5a332e757e62ab9911",interrupted);
         const auto began = Clock::now();
         if (std::string(OrtGetApiBase()->GetVersionString()) != "1.31.0")
             throw std::runtime_error("Evaluation requires verified ONNX Runtime 1.31.0");
@@ -392,10 +398,12 @@ int main(int argc, char** argv)
         report << "]\n}\n";
         const auto bytes=midi(notes,tempo,program,key,minor,bars*4*ticksPerBeat);
         const auto json=report.str();
-        writeExclusive(prefix.string()+".mid",bytes.data(),bytes.size());
-        writeExclusive(prefix.string()+".json",json.data(),json.size());
+        writeExclusive(midiPath,bytes.data(),bytes.size());
+        writeExclusive(jsonPath,json.data(),json.size());
         std::cout << notes.size() << " notes in " << seconds << " s; peak sampled footprint " << peak.load()/1024/1024 << " MiB\n";
     }
     catch (const std::exception& error) {std::cerr << error.what() << '\n'; return 1;}
     return 0;
 }
+
+AETHER_NATIVE_ENTRY(runNative)

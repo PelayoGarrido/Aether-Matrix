@@ -31,7 +31,7 @@ jobs:
         run: python3 scripts/verify_bundles.py build/Aether_Matrix_artefacts/Release
       - name: Package macOS
         if: runner.os == 'macOS'
-        run: ./installers/macos/build_pkg.sh build 0.1.0
+        run: ./installers/macos/build_pkg.sh build 1.0.0
       - name: Bundle Windows CRT
         if: runner.os == 'Windows'
         shell: pwsh
@@ -40,11 +40,12 @@ jobs:
           $crt = Get-ChildItem "$vs\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -Directory | Sort-Object FullName | Select-Object -Last 1
           if (!$crt) { throw 'MSVC runtime redistribution directory is missing' }
           Copy-Item "$($crt.FullName)\*.dll" 'build\Aether_Matrix_artefacts\Release\VST3\Aether Matrix.vst3\Contents\x86_64-win\'
+          Copy-Item "$($crt.FullName)\*.dll" 'build\Aether_Matrix_artefacts\Release\VST3\Aether Matrix.vst3\Contents\x86_64-win\Helpers\'
       - name: Package Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DAppVersion=0.1.0 "/DBuildDir=$pwd\build" installers/windows/installer.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.0 "/DBuildDir=$pwd\build" installers/windows/installer.iss
           if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
       - name: Checksums
         run: python3 scripts/checksums.py build/installers

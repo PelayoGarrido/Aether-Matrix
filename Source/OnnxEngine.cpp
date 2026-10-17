@@ -1,6 +1,7 @@
 #include "OnnxEngine.h"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include "DefaultModel.h"
 
 #if AETHER_ENABLE_ONNX
@@ -48,7 +49,8 @@ const OrtApi* loadRuntime()
     auto getBase = reinterpret_cast<const OrtApiBase* (*)()>(GetProcAddress(handle, "OrtGetApiBase"));
  #endif
     // Keep ORT resident: another plugin instance may still own sessions on unload.
-    return getBase != nullptr ? getBase()->GetApi(ORT_API_VERSION) : nullptr;
+    if (getBase==nullptr || std::strcmp(getBase()->GetVersionString(),"1.31.0")!=0) return nullptr;
+    return getBase()->GetApi(ORT_API_VERSION);
 }
 
 bool initialiseRuntime()
@@ -88,6 +90,15 @@ struct OnnxEngine::Impl {};
 OnnxEngine::OnnxEngine() = default;
 OnnxEngine::~OnnxEngine() = default;
 
+bool OnnxEngine::initialiseBundledRuntime()
+{
+#if AETHER_ENABLE_ONNX
+    return initialiseRuntime();
+#else
+    return false;
+#endif
+}
+
 juce::String OnnxEngine::load(const juce::File& file)
 {
 #if AETHER_ENABLE_ONNX
@@ -102,8 +113,15 @@ juce::String OnnxEngine::load(const juce::File& file)
         juce::MemoryBlock bytes;
         if (file == juce::File{})
             bytes.append(AetherModel::rave_decoder_onnx, static_cast<size_t>(AetherModel::rave_decoder_onnxSize));
-        else if (!file.loadFileAsData(bytes) || bytes.getSize() > 16 * 1024 * 1024)
-            return "Cannot read model";
+        else
+        {
+            juce::FileInputStream stream(file);
+            if (!stream.openedOk()) return "Cannot read reference decoder";
+            stream.readIntoMemoryBlock(bytes,16*1024*1024+1);
+            if (bytes.getSize()!=static_cast<size_t>(AetherModel::rave_decoder_onnxSize)
+                || std::memcmp(bytes.getData(),AetherModel::rave_decoder_onnx,bytes.getSize())!=0)
+                return "Custom ONNX execution requires an isolated helper; only the bundled reference decoder is accepted";
+        }
         candidate->session = std::make_unique<Ort::Session>(candidate->env, bytes.getData(),
                                                            bytes.getSize(), candidate->options);
         auto& session = *candidate->session;

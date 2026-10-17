@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "exporter": "pianist-native-1",
+  "source_revision": "8f1568201d1ec035c73939d5a67c5168c0b80221",
+  "files": [
+    {
+      "path": "encoder.onnx",
+      "bytes": 99057,
+      "sha256": "6581844323d5d5f492c01616b222a9c51ed06ec41865bb0a2a8180d8b9dd4aa4"
+    },
+    {
+      "path": "decoder.onnx",
+      "bytes": 28286,
+      "sha256": "8124af9ad2fd3ac04bdb05842ba22234edcb73edc5b502648bea61e4e357a214"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 271506656,
+      "sha256": "8fb9111efc147adcc61a4885bd42a6e6b625626d9fb8576811916927aa8281d0"
+    }
+  ],
+  "compute": "FP32; original BF16 weights cast at session load",
+  "opset": 20,
+  "redistribution_approved": false
+}

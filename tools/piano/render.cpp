@@ -1,3 +1,4 @@
+#include "../../Source/NativeEntry.h"
 #include "Performance.h"
 #include "PianoSampler.h"
 #include <juce_cryptography/juce_cryptography.h>
@@ -46,7 +47,7 @@ juce::String hash(const juce::File& file)
     return juce::SHA256(stream).toHexString();
 }
 }
-int main(int argc,char** argv)
+static int runNative(int argc,char** argv)
 {
     juce::File output;
     bool owned=false,complete=false;
@@ -151,7 +152,7 @@ int main(int argc,char** argv)
             midi.flush();if (midi.getStatus().failed()) throw std::runtime_error("MIDI flush failed");
         }
         writeJson(output.getChildFile("performance.json"),performance.canonical());
-        const juce::String credits="Salamander Grand Piano v3 — recordings: Alexander Holm.\nSFZ reconstruction: kinwie. Retuning: Markus Fiedler. Sample-start offsets: Jeff Learman.\nSource: https://github.com/sfzinstruments/SalamanderGrandPiano\nSource revision: 3382bf9496bba2486f5ab0de55a264d1dfc38404\nSamples/mapping: Creative Commons Attribution 3.0 Unported — https://creativecommons.org/licenses/by/3.0/\nChanges: restricted native piano mapping, retuned playback, sample-start alignment, deterministic pedal-noise alternation, 0.5-second same-pitch retrigger fade. No claim of full ARIA/SFZ emulation or endorsement.\nThe performance model and its training data have separate terms. This render grants no additional rights to the composition or AI output.\n";
+        const juce::String credits=juce::String::fromUTF8("Salamander Grand Piano v3 — recordings: Alexander Holm.\nSFZ reconstruction: kinwie. Retuning: Markus Fiedler. Sample-start offsets: Jeff Learman.\nSource: https://github.com/sfzinstruments/SalamanderGrandPiano\nSource revision: 3382bf9496bba2486f5ab0de55a264d1dfc38404\nSamples/mapping: Creative Commons Attribution 3.0 Unported — https://creativecommons.org/licenses/by/3.0/\nChanges: restricted native piano mapping, retuned playback, sample-start alignment, deterministic pedal-noise alternation, 0.5-second same-pitch retrigger fade, 1 ms smooth per-voice start/end boundary fades. No claim of full ARIA/SFZ emulation or endorsement.\nThe performance model and its training data have separate terms. This render grants no additional rights to the composition or AI output.\n");
         if (!output.getChildFile("CREDITS.txt").replaceWithText(credits)) throw std::runtime_error("Could not retain instrument attribution");
         auto model=original["candidate"].toString(),revision=original["revision"].toString();
         if (model.length()>128 || model.startsWithChar('/') || model.contains("..") || !model.containsOnly("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._/"))
@@ -162,6 +163,7 @@ int main(int argc,char** argv)
         o->setProperty("neural_waveform_generation",false);o->setProperty("source_model",model);o->setProperty("source_model_revision",revision);
         o->setProperty("source_performance_sha256",sourceHash);o->setProperty("source_bank_revision","3382bf9496bba2486f5ab0de55a264d1dfc38404");
         o->setProperty("instrument_license","CC-BY-3.0");o->setProperty("performance_commercial_clearance","not_established");
+        o->setProperty("voice_boundary_fade_ms",1.0);o->setProperty("voice_boundary_fade_curve","cubic smoothstep; per voice, no mix ducking");
         o->setProperty("sample_rate",rate);o->setProperty("bits_per_sample",24);o->setProperty("frames",static_cast<juce::int64>(frame));
         o->setProperty("raw_sample_peak",peak);o->setProperty("output_gain",gain);o->setProperty("sample_peak_after_gain",peak*gain);
         o->setProperty("tail_sample_peak",tailPeak);o->setProperty("peak_voices",static_cast<int>(piano.peakVoices()));
@@ -185,3 +187,5 @@ int main(int argc,char** argv)
     }
     return 0;
 }
+
+AETHER_NATIVE_ENTRY(runNative)

@@ -11,6 +11,8 @@ public:
     ~OnnxEngine();
     juce::String load(const juce::File&);
     bool render(const std::array<float, 16>&, std::array<float, 2048>&);
+    // Shared verified bundled-runtime initialisation; never call on audio thread.
+    static bool initialiseBundledRuntime();
 
 private:
     struct Impl;

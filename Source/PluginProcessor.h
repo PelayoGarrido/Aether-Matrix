@@ -3,6 +3,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_dsp/juce_dsp.h>
 #include "OnnxEngine.h"
+#include "PianoStudio.h"
 #include "AudioQuality.h"
 #include <atomic>
 #include <array>
@@ -14,7 +15,7 @@ class AetherMatrixProcessor : public juce::AudioProcessor,
                               private juce::Thread
 {
 public:
-    explicit AetherMatrixProcessor(juce::File exportDirectory = {});
+    explicit AetherMatrixProcessor(juce::File exportDirectory = {},juce::File nativeHelpers = {});
     ~AetherMatrixProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -46,6 +47,10 @@ public:
     bool loadOnnxModel(const juce::File& onnxFile);
     juce::String getLoadedModelNameSafe() const;
 
+    aether::PianoStudio* getPianoStudio() noexcept {return pianoStudio.get();}
+    aether::AudioPreview& getPianoPreview() noexcept {return pianoPreview;}
+    bool isPianoMode() const noexcept {return pianoMode.load(std::memory_order_acquire);}
+    void setPianoMode(bool enabled) noexcept {pianoMode.store(enabled,std::memory_order_release);if (!enabled) pianoPreview.stop();}
     void triggerMasterGeneration();
     bool isGenerating() const noexcept { return generationInProgress.load(std::memory_order_acquire); }
     bool hasGeneratedFiles() const noexcept { return filesReadyToDrag.load(std::memory_order_acquire); }
@@ -100,6 +105,9 @@ private:
     static constexpr int kFifoCapacity   = 8192;
 
     const juce::File exportDirectory;
+    aether::AudioPreview pianoPreview;
+    std::unique_ptr<aether::PianoStudio> pianoStudio;
+    std::atomic<bool> pianoMode{false};bool audioPianoMode=false;
     OnnxEngine onnxEngine;
     std::atomic<unsigned> modelEpoch { 0 };
     unsigned audioModelEpoch = 0;
